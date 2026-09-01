@@ -112,15 +112,15 @@ ORDER BY total_items DESC;`);
   };
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-150">
-      {/* Top Workspace Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b-2 border-[#1c253b] pb-3">
-        <div className="flex items-center space-x-3">
-          <div className="flex rounded-lg bg-[#080c16] p-1 border-2 border-[#2a364f] shadow-[3px_3px_0px_#000] font-mono">
+    <div className="space-y-4 animate-in fade-in duration-150 font-mono text-xs">
+      {/* Top Workspace Tabs Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b-[3px] border-black pb-3">
+        <div className="flex items-center space-x-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          <div className="flex rounded bg-[#0d1117] p-1 border-2 border-black shadow-[3px_3px_0px_#000] flex-shrink-0">
             <button
               onClick={() => setActiveTab('editor')}
-              className={`flex items-center space-x-1.5 rounded px-3 py-1.5 text-xs font-bold transition-all ${
-                activeTab === 'editor' ? 'bg-[#06b6d4] text-black font-black' : 'text-slate-400 hover:text-white'
+              className={`flex items-center space-x-1.5 rounded px-2.5 sm:px-3 py-1.5 text-xs font-black transition-all cursor-pointer min-h-[36px] ${
+                activeTab === 'editor' ? 'bg-[#ffee00] text-black shadow-[2px_2px_0px_#000]' : 'text-slate-300 hover:text-white'
               }`}
             >
               <Terminal className="h-3.5 w-3.5" />
@@ -128,217 +128,177 @@ ORDER BY total_items DESC;`);
             </button>
             <button
               onClick={() => setActiveTab('dbt')}
-              className={`flex items-center space-x-1.5 rounded px-3 py-1.5 text-xs font-bold transition-all ${
-                activeTab === 'dbt' ? 'bg-[#06b6d4] text-black font-black' : 'text-slate-400 hover:text-white'
+              className={`flex items-center space-x-1.5 rounded px-2.5 sm:px-3 py-1.5 text-xs font-black transition-all cursor-pointer min-h-[36px] ${
+                activeTab === 'dbt' ? 'bg-[#00f0ff] text-black shadow-[2px_2px_0px_#000]' : 'text-slate-300 hover:text-white'
               }`}
             >
               <GitFork className="h-3.5 w-3.5" />
-              <span>dbt & Lineage DAG</span>
-              <span className="rounded bg-black px-1.5 py-0.2 text-[9px] font-black text-cyan-300">
+              <span>dbt DAG</span>
+              <span className="brutal-badge bg-black text-white text-[8px]">
                 {dbtModels.length}
               </span>
             </button>
             <button
               onClick={() => setActiveTab('saved')}
-              className={`flex items-center space-x-1.5 rounded px-3 py-1.5 text-xs font-bold transition-all ${
-                activeTab === 'saved' ? 'bg-[#06b6d4] text-black font-black' : 'text-slate-400 hover:text-white'
+              className={`flex items-center space-x-1.5 rounded px-2.5 sm:px-3 py-1.5 text-xs font-black transition-all cursor-pointer min-h-[36px] ${
+                activeTab === 'saved' ? 'bg-white text-black shadow-[2px_2px_0px_#000]' : 'text-slate-300 hover:text-white'
               }`}
             >
               <Save className="h-3.5 w-3.5" />
-              <span>Saved Queries</span>
+              <span>Saved</span>
             </button>
             <button
               onClick={() => setActiveTab('history')}
-              className={`flex items-center space-x-1.5 rounded px-3 py-1.5 text-xs font-bold transition-all ${
-                activeTab === 'history' ? 'bg-[#06b6d4] text-black font-black' : 'text-slate-400 hover:text-white'
+              className={`flex items-center space-x-1.5 rounded px-2.5 sm:px-3 py-1.5 text-xs font-black transition-all cursor-pointer min-h-[36px] ${
+                activeTab === 'history' ? 'bg-[#00ff66] text-black shadow-[2px_2px_0px_#000]' : 'text-slate-300 hover:text-white'
               }`}
             >
               <Clock className="h-3.5 w-3.5" />
               <span>History</span>
             </button>
           </div>
-
-          {/* Database Target Selector */}
-          <div className="flex items-center space-x-2 neu-inset-well px-3 py-1.5 text-xs font-mono">
-            <Database className="h-3.5 w-3.5 text-cyan-400" />
-            <select
-              value={selectedDataSourceId}
-              onChange={(e) => setSelectedDataSourceId(e.target.value)}
-              className="bg-transparent text-white font-bold outline-none cursor-pointer"
-            >
-              {dataSources.map((ds) => (
-                <option key={ds.id} value={ds.id} className="bg-[#0c101c] text-white">
-                  {ds.name} ({ds.type})
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
 
-        {/* AI Natural Language to SQL Bar */}
-        <div className="flex items-center space-x-2 flex-1 max-w-md">
-          <div className="relative flex-1 neu-inset-well flex items-center px-2 py-0.5">
-            <Sparkles className="h-3.5 w-3.5 text-[#ffee00] mr-2" />
-            <input
-              type="text"
-              value={nlPrompt}
-              onChange={(e) => setNlPrompt(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleNlGenerate()}
-              placeholder="Ask AI: 'Show monthly revenue by cohort'..."
-              className="w-full bg-transparent py-1 font-mono text-xs text-white placeholder-slate-500 outline-none"
-            />
-          </div>
-          <button
-            onClick={handleNlGenerate}
-            disabled={!nlPrompt.trim()}
-            className="brutal-btn brutal-btn-primary px-3 py-1.5 text-xs font-black"
+        {/* Database Selector */}
+        <div className="flex items-center space-x-2 flex-shrink-0">
+          <Database className="h-4 w-4 text-[#00f0ff]" />
+          <select
+            value={selectedDataSourceId}
+            onChange={(e) => setSelectedDataSourceId(e.target.value)}
+            className="rounded bg-[#0d1117] text-white border-2 border-black px-2.5 py-1.5 text-xs font-black shadow-[2px_2px_0px_#000] outline-none cursor-pointer max-w-[200px] sm:max-w-xs truncate"
           >
-            GENERATE
-          </button>
+            {dataSources.map((ds) => (
+              <option key={ds.id} value={ds.id}>
+                {ds.name} ({ds.type})
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Main Tab: SQL Editor */}
+      {/* Tab 1: SQL IDE */}
       {activeTab === 'editor' && (
-        <div className="grid grid-cols-1 gap-4">
-          <div className="brutal-panel p-4 flex flex-col justify-between space-y-3">
-            {/* Editor Action Controls */}
-            <div className="flex items-center justify-between border-b border-[#1c253b] pb-3">
-              <div className="flex items-center space-x-2 font-mono text-xs font-bold text-slate-300">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#10b981]" />
-                <span>QUERY_SCRATCHPAD.SQL</span>
-                <span className="text-slate-500">({selectedDs.type})</span>
+        <div className="space-y-4">
+          {/* AI Prompt Input Bar */}
+          <div className="brutal-panel p-3 bg-[#ffee00] text-black border-2 border-black shadow-[4px_4px_0px_#000]">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="flex items-center space-x-1.5 text-black font-black flex-shrink-0">
+                <Sparkles className="h-4 w-4 fill-black" />
+                <span className="text-xs uppercase">AI Prompt to SQL:</span>
+              </div>
+              <input
+                type="text"
+                value={nlPrompt}
+                onChange={(e) => setNlPrompt(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleNlGenerate()}
+                placeholder="e.g. 'Show monthly revenue by tier for the last 12 months'"
+                className="flex-1 rounded border-2 border-black bg-white px-3 py-1.5 text-xs text-black placeholder-slate-600 outline-none font-bold min-h-[36px]"
+              />
+              <button
+                onClick={handleNlGenerate}
+                className="brutal-btn bg-black text-white hover:bg-slate-900 px-3 py-1.5 text-xs font-black min-h-[36px]"
+              >
+                GENERATE SQL
+              </button>
+            </div>
+          </div>
+
+          {/* SQL Editor Area */}
+          <div className="brutal-panel p-4 space-y-3 bg-[#161b22]">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-black pb-2">
+              <div className="flex items-center space-x-2">
+                <span className="text-white font-black text-xs uppercase">// QUERY_SCRATCHPAD.SQL</span>
+                <span className="brutal-badge bg-[#00ff66] text-black">
+                  READY
+                </span>
               </div>
 
-              <div className="flex items-center space-x-2 font-mono">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <button
                   onClick={handleFormatSql}
-                  className="brutal-btn bg-[#131b2e] text-slate-300 hover:text-white px-2.5 py-1 text-xs"
+                  className="brutal-btn bg-[#21262d] text-slate-200 px-2.5 py-1 text-[11px] min-h-[32px]"
                 >
-                  FORMAT SQL
+                  FORMAT
                 </button>
                 <button
                   onClick={() => setIsExplainModalOpen(true)}
-                  className="brutal-btn bg-[#131b2e] text-cyan-300 hover:text-white px-2.5 py-1 text-xs"
+                  className="brutal-btn bg-[#00f0ff] text-black px-2.5 py-1 text-[11px] font-black min-h-[32px]"
                 >
                   EXPLAIN PLAN
                 </button>
                 <button
-                  onClick={() => {
-                    setSaveTitle('Custom Analytics Query');
-                    setIsSaveModalOpen(true);
-                  }}
-                  className="brutal-btn bg-[#131b2e] text-slate-300 hover:text-white px-2.5 py-1 text-xs"
+                  onClick={() => setIsSaveModalOpen(true)}
+                  className="brutal-btn bg-white text-black px-2.5 py-1 text-[11px] font-black min-h-[32px]"
                 >
-                  SAVE
+                  <Save className="h-3 w-3 mr-1" />
+                  <span>SAVE</span>
                 </button>
                 <button
                   onClick={() => executeQuery()}
                   disabled={isQueryRunning}
-                  className="brutal-btn brutal-btn-emerald px-4 py-1 text-xs font-black"
+                  className="brutal-btn brutal-btn-green px-4 py-1 text-xs font-black min-h-[32px]"
                 >
-                  <Play className={`h-3.5 w-3.5 fill-black mr-1 ${isQueryRunning ? 'animate-spin' : ''}`} />
+                  <Play className="h-3.5 w-3.5 mr-1 fill-black" />
                   <span>{isQueryRunning ? 'RUNNING...' : 'RUN QUERY'}</span>
                 </button>
               </div>
             </div>
 
-            {/* SQL Text Area with Neumorphic Inset Well */}
-            <div className="neu-inset-well p-3.5 font-mono text-xs text-cyan-200 flex min-h-[220px]">
-              <div className="select-none pr-3 border-r border-[#1c253b] text-slate-600 text-right font-mono space-y-1">
-                {activeSql.split('\n').map((_, i) => (
-                  <div key={i}>{i + 1}</div>
-                ))}
-              </div>
+            {/* Monospace Text Area */}
+            <div className="relative">
               <textarea
                 value={activeSql}
                 onChange={(e) => setActiveSql(e.target.value)}
-                onKeyDown={(e) => {
-                  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                    e.preventDefault();
-                    executeQuery();
-                  }
-                }}
-                className="w-full resize-y bg-transparent pl-3 font-mono text-xs text-slate-100 placeholder-slate-600 focus:outline-none leading-relaxed"
-                rows={10}
+                rows={9}
+                className="w-full brutal-box p-3 font-mono text-xs text-[#00f0ff] bg-[#0d1117] leading-relaxed outline-none resize-y"
+                placeholder="-- Enter your SQL query here..."
                 spellCheck={false}
               />
             </div>
-
-            {/* AI Optimization Bar */}
-            <div className="flex items-center justify-between neu-inset-well p-2.5 text-xs font-mono">
-              <div className="flex items-center space-x-2 text-cyan-300">
-                <Sparkles className="h-3.5 w-3.5 text-[#ffee00]" />
-                <span className="font-bold">DATAPILOT AI OPTIMIZER:</span>
-                <span className="text-slate-400 text-[11px]">Ready to optimize CTEs or index scans.</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => openCopilotWithPrompt(`Optimize this SQL query for high performance:\n\n${activeSql}`)}
-                  className="brutal-btn bg-[#ffee00] text-black px-2.5 py-1 text-[10px] font-black"
-                >
-                  ⚡ OPTIMIZE SQL
-                </button>
-                <button
-                  onClick={() => openCopilotWithPrompt(`Explain this SQL step by step in plain language:\n\n${activeSql}`)}
-                  className="brutal-btn bg-[#131b2e] text-slate-300 px-2.5 py-1 text-[10px]"
-                >
-                  💡 EXPLAIN LOGIC
-                </button>
-              </div>
-            </div>
           </div>
 
-          {/* Results Table */}
+          {/* Results Table View */}
           {activeQueryResult && (
-            <div className="brutal-panel p-4 space-y-3">
-              <div className="flex items-center justify-between border-b border-[#1c253b] pb-3">
-                <div className="flex items-center space-x-3 text-xs font-mono">
-                  <span className="font-black text-white uppercase flex items-center space-x-1.5">
-                    <TableIcon className="h-4 w-4 text-emerald-400" />
-                    <span>QUERY RESULTS</span>
-                  </span>
-                  <span className="rounded bg-emerald-400 text-black px-1.5 py-0.2 font-bold border border-black shadow-[1.5px_1.5px_0px_#000]">
-                    {activeQueryResult.rowCount} ROWS IN {activeQueryResult.executionTimeMs}MS
-                  </span>
-                  <span className="text-slate-400">
-                    Scanned: {activeQueryResult.bytesScanned}
+            <div className="brutal-panel p-4 space-y-3 bg-[#161b22]">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-black pb-2">
+                <div className="flex items-center space-x-2">
+                  <TableIcon className="h-4 w-4 text-[#00ff66]" />
+                  <span className="text-white font-black text-xs uppercase">QUERY RESULTS ({activeQueryResult.rowCount} ROWS)</span>
+                  <span className="brutal-badge bg-[#ffee00] text-black">
+                    {activeQueryResult.executionTimeMs}MS
                   </span>
                 </div>
 
-                <button
-                  onClick={handleExportCsv}
-                  className="brutal-btn bg-[#131b2e] text-slate-200 px-3 py-1 text-xs font-mono font-bold"
-                >
-                  <Download className="h-3 w-3 mr-1" />
-                  <span>EXPORT CSV</span>
-                </button>
+                <div className="flex items-center space-x-2">
+                  <span className="text-[10px] text-slate-400 font-bold hidden sm:inline">Scanned: {activeQueryResult.bytesScanned}</span>
+                  <button
+                    onClick={handleExportCsv}
+                    className="brutal-btn bg-white text-black px-3 py-1 text-xs font-black min-h-[32px]"
+                  >
+                    <Download className="h-3.5 w-3.5 mr-1" />
+                    <span>CSV EXPORT</span>
+                  </button>
+                </div>
               </div>
 
-              {/* Data Table */}
-              <div className="overflow-x-auto rounded-lg border-2 border-[#2a364f] bg-[#080c16] shadow-[4px_4px_0px_#000]">
+              {/* Horizontal Scrollable Table */}
+              <div className="overflow-x-auto rounded border-2 border-black shadow-[3px_3px_0px_#000] bg-[#0d1117]">
                 <table className="w-full text-left text-xs font-mono">
-                  <thead className="border-b-2 border-[#1c253b] bg-[#0c101c] text-[10px] uppercase text-slate-400 font-black">
+                  <thead className="border-b-2 border-black bg-[#21262d] text-white uppercase text-[10px] font-black">
                     <tr>
-                      <th className="px-3 py-2 w-10 text-slate-600">#</th>
                       {activeQueryResult.columns.map((col, idx) => (
-                        <th key={idx} className="px-4 py-2 text-slate-300">
-                          {col} ({activeQueryResult.types[idx] || 'text'})
+                        <th key={idx} className="px-3 sm:px-4 py-2 border-r border-black last:border-0 whitespace-nowrap">
+                          {col}
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#1c253b] text-slate-200">
-                    {activeQueryResult.rows.map((row, rowIdx) => (
-                      <tr key={rowIdx} className="hover:bg-[#12192a]">
-                        <td className="px-3 py-2.5 text-slate-600 text-[10px]">{rowIdx + 1}</td>
+                  <tbody className="divide-y divide-black text-slate-200">
+                    {activeQueryResult.rows.map((row, rIdx) => (
+                      <tr key={rIdx} className="hover:bg-[#161b22]">
                         {activeQueryResult.columns.map((col, cIdx) => (
-                          <td key={cIdx} className="px-4 py-2.5 whitespace-nowrap">
-                            {typeof row[col] === 'number' ? (
-                              <span className="text-[#ffee00] font-bold">{row[col].toLocaleString()}</span>
-                            ) : (
-                              <span>{String(row[col])}</span>
-                            )}
+                          <td key={cIdx} className="px-3 sm:px-4 py-2 border-r border-black last:border-0 whitespace-nowrap text-white">
+                            {typeof row[col] === 'number' ? row[col].toLocaleString() : String(row[col])}
                           </td>
                         ))}
                       </tr>
@@ -351,153 +311,145 @@ ORDER BY total_items DESC;`);
         </div>
       )}
 
-      {/* Tab: dbt & Lineage DAG */}
+      {/* Tab 2: dbt & Lineage DAG */}
       {activeTab === 'dbt' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Models List (4 cols) */}
-          <div className="lg:col-span-4 brutal-panel p-4 space-y-3">
-            <div className="flex items-center justify-between border-b border-[#1c253b] pb-3">
-              <h3 className="font-display text-sm font-black text-white uppercase flex items-center space-x-2">
-                <Boxes className="h-4 w-4 text-cyan-400" />
-                <span>dbt Project Models</span>
-              </h3>
-              <span className="rounded bg-[#ffee00] text-black px-1.5 py-0.2 font-mono text-[9px] font-black border border-black">
-                CORE V1.8
+          <div className="lg:col-span-4 brutal-panel p-4 space-y-3 bg-[#161b22]">
+            <div className="flex items-center justify-between border-b-2 border-black pb-2">
+              <span className="text-white font-black text-xs uppercase">// DBT MODELS</span>
+              <span className="brutal-badge bg-[#ffee00] text-black">
+                14/14 PASS
               </span>
             </div>
 
             <div className="space-y-2">
-              {dbtModels.map((model) => {
-                const isSelected = selectedModel?.id === model.id;
-
-                return (
-                  <div
-                    key={model.id}
-                    onClick={() => {
-                      setSelectedModel(model);
-                      setSelectedDagNode(model.name);
-                    }}
-                    className={`cursor-pointer rounded-lg border-2 p-3 transition-all ${
-                      isSelected
-                        ? 'border-[#06b6d4] bg-[#141e33] shadow-[3.5px_3.5px_0px_#000] translate-x-[-1px]'
-                        : 'border-[#2a364f] bg-[#0c1220] hover:border-slate-500'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-mono text-xs font-bold text-white truncate">
-                        {model.name}
-                      </span>
-                      <span className="rounded bg-black px-1.5 py-0.2 font-mono text-[8px] font-black text-cyan-400 uppercase border border-[#2a364f]">
-                        {model.materialization}
-                      </span>
-                    </div>
-
-                    <p className="text-[11px] font-mono text-slate-400 line-clamp-1">{model.description}</p>
+              {dbtModels.map((m) => (
+                <div
+                  key={m.id}
+                  onClick={() => setSelectedModel(m)}
+                  className={`cursor-pointer rounded p-3 border-2 border-black transition-all ${
+                    selectedModel?.id === m.id
+                      ? 'bg-[#00f0ff] text-black font-black shadow-[3px_3px_0px_#000]'
+                      : 'bg-[#0d1117] text-white hover:bg-[#21262d]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold truncate text-xs">{m.name}</span>
+                    <span className="brutal-badge bg-black text-white text-[8px]">
+                      {m.materialization}
+                    </span>
                   </div>
-                );
-              })}
+                  <div className="flex items-center justify-between text-[10px] text-slate-400">
+                    <span>{m.schema}</span>
+                    <span className="text-[#00ff66] font-bold">✓ {m.tests.length} tests</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Lineage Graph (8 cols) */}
-          <div className="lg:col-span-8 brutal-panel p-5 space-y-4">
+          {/* DAG Canvas View (8 cols) */}
+          <div className="lg:col-span-8 brutal-panel p-5 space-y-4 bg-[#161b22]">
+            <div className="flex items-center justify-between border-b-2 border-black pb-2">
+              <div>
+                <h3 className="text-sm font-black text-white uppercase">Interactive Data Lineage DAG</h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">Click any node in the pipeline to trace lineage dependencies.</p>
+              </div>
+              <button
+                onClick={() => selectedModel && runDbtModel(selectedModel.id)}
+                className="brutal-btn brutal-btn-yellow px-3 py-1.5 text-xs font-black"
+              >
+                BUILD DBT MODEL
+              </button>
+            </div>
+
+            {/* Interactive DAG Flow Grid */}
+            <div className="brutal-box p-4 bg-[#0d1117] space-y-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-center">
+                {/* Source Node */}
+                <div
+                  onClick={() => setSelectedDagNode('raw_stripe')}
+                  className={`p-3 rounded border-2 border-black cursor-pointer w-full sm:w-44 ${
+                    selectedDagNode === 'raw_stripe' ? 'bg-[#ffee00] text-black shadow-[3px_3px_0px_#000]' : 'bg-[#161b22] text-white'
+                  }`}
+                >
+                  <div className="text-[10px] font-bold uppercase text-slate-400">SOURCE</div>
+                  <div className="font-black text-xs">raw_stripe_charges</div>
+                </div>
+
+                <ArrowRight className="h-4 w-4 text-[#00f0ff] hidden sm:inline" />
+
+                {/* Staging Node */}
+                <div
+                  onClick={() => setSelectedDagNode('stg_stripe')}
+                  className={`p-3 rounded border-2 border-black cursor-pointer w-full sm:w-44 ${
+                    selectedDagNode === 'stg_stripe' ? 'bg-[#00f0ff] text-black shadow-[3px_3px_0px_#000]' : 'bg-[#161b22] text-white'
+                  }`}
+                >
+                  <div className="text-[10px] font-bold uppercase text-slate-400">STAGING</div>
+                  <div className="font-black text-xs">stg_stripe_customers</div>
+                </div>
+
+                <ArrowRight className="h-4 w-4 text-[#00f0ff] hidden sm:inline" />
+
+                {/* Mart Node */}
+                <div
+                  onClick={() => setSelectedDagNode('mart_finance_mrr')}
+                  className={`p-3 rounded border-2 border-black cursor-pointer w-full sm:w-44 ${
+                    selectedDagNode === 'mart_finance_mrr' ? 'bg-[#00ff66] text-black shadow-[3px_3px_0px_#000]' : 'bg-[#161b22] text-white'
+                  }`}
+                >
+                  <div className="text-[10px] font-bold uppercase text-slate-400">MART TABLE</div>
+                  <div className="font-black text-xs">mart_finance_mrr</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Compiled SQL View */}
             {selectedModel && (
-              <>
-                <div className="flex items-center justify-between border-b border-[#1c253b] pb-3">
-                  <div>
-                    <h3 className="font-mono text-base font-black text-white">{selectedModel.name}.sql</h3>
-                    <p className="text-xs text-slate-400 font-mono mt-0.5">{selectedModel.description}</p>
-                  </div>
-
-                  <button
-                    onClick={() => runDbtModel(selectedModel.id)}
-                    className="brutal-btn brutal-btn-primary px-4 py-2 text-xs font-black"
-                  >
-                    <Play className="h-3.5 w-3.5 mr-1" />
-                    <span>RUN DBT MODEL</span>
-                  </button>
-                </div>
-
-                {/* Lineage DAG */}
-                <div className="neu-inset-well p-4">
-                  <div className="flex items-center justify-between mb-3 text-xs font-mono font-bold text-slate-300">
-                    <span>// INTERACTIVE LINEAGE GRAPH (DAG)</span>
-                    <span className="text-cyan-400">UPSTREAM → DOWNSTREAM</span>
-                  </div>
-
-                  <div className="relative h-44 w-full flex items-center justify-around px-4 overflow-x-auto">
-                    {[
-                      { id: 'raw_stripe', type: 'SOURCE', name: 'raw_stripe' },
-                      { id: 'stg_stripe_customers', type: 'VIEW', name: 'stg_stripe_cust' },
-                      { id: 'dim_customers', type: 'TABLE', name: 'dim_customers' },
-                      { id: 'mart_finance_mrr', type: 'MART', name: 'mart_finance_mrr' }
-                    ].map((node, i) => (
-                      <React.Fragment key={node.id}>
-                        <div 
-                          onClick={() => setSelectedDagNode(node.id)}
-                          className={`cursor-pointer rounded-lg border-2 p-3 text-center min-w-[120px] transition-all font-mono ${
-                            selectedDagNode === node.id 
-                              ? 'border-[#06b6d4] bg-[#ffee00] text-black shadow-[4px_4px_0px_#000] font-black scale-105' 
-                              : 'border-[#2a364f] bg-[#0c1220] text-white shadow-[2.5px_2.5px_0px_#000]'
-                          }`}
-                        >
-                          <span className="text-[8px] block opacity-70">{node.type}</span>
-                          <span className="text-xs font-bold">{node.name}</span>
-                        </div>
-                        {i < 3 && <ArrowRight className="h-4 w-4 text-cyan-400 flex-shrink-0" />}
-                      </React.Fragment>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Compiled SQL View */}
-                <div>
-                  <span className="text-xs font-mono font-bold text-slate-300 block mb-2">// COMPILED DBT SQL:</span>
-                  <pre className="neu-inset-well p-3 font-mono text-xs text-cyan-300 overflow-x-auto max-h-56">
-                    {selectedModel.compiledSql}
-                  </pre>
-                </div>
-              </>
+              <div className="space-y-2">
+                <span className="text-white font-black text-xs uppercase">// COMPILED DBT SQL: {selectedModel.name}.sql</span>
+                <pre className="brutal-box p-3 text-[#00f0ff] overflow-x-auto text-[11px] bg-[#0d1117] leading-relaxed max-h-48">
+                  {selectedModel.compiledSql}
+                </pre>
+              </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Tab: Saved Queries */}
+      {/* Tab 3: Saved Queries */}
       {activeTab === 'saved' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {savedQueries.map((q) => (
-            <div
-              key={q.id}
-              className="brutal-panel brutal-panel-hover p-5 flex flex-col justify-between"
-            >
+            <div key={q.id} className="brutal-panel p-4 space-y-3 bg-[#161b22] flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex flex-wrap gap-1">
-                    {q.tags.map((t, i) => (
-                      <span key={i} className="rounded bg-black text-slate-300 px-1.5 py-0.5 font-mono text-[9px] border border-[#2a364f]">
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                  <span className="text-[10px] text-emerald-400 font-mono font-bold">{q.avgDurationMs}ms</span>
+                  <span className="text-white font-black text-sm">{q.title}</span>
+                  <span className="brutal-badge bg-white text-black text-[9px]">{q.avgDurationMs}ms</span>
                 </div>
-
-                <h3 className="font-display text-sm font-black text-white uppercase">{q.title}</h3>
-                <p className="text-xs font-mono text-slate-400 mt-1 line-clamp-2">{q.description}</p>
+                <p className="text-slate-400 text-xs line-clamp-2">{q.description}</p>
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {q.tags.map((t, i) => (
+                    <span key={i} className="brutal-badge bg-[#21262d] text-white text-[8px]">
+                      #{t}
+                    </span>
+                  ))}
+                </div>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-[#1c253b] flex items-center justify-between">
-                <span className="text-[10px] font-mono text-slate-500">{q.database}</span>
+              <div className="pt-2 border-t-2 border-black flex items-center justify-between">
+                <span className="text-[10px] text-slate-400">{q.author}</span>
                 <button
                   onClick={() => {
                     setActiveSql(q.sql);
                     setActiveTab('editor');
-                    addToast({ type: 'info', title: `Loaded "${q.title}"` });
+                    addToast({ type: 'info', title: `Loaded "${q.title}" into SQL IDE.` });
                   }}
-                  className="brutal-btn brutal-btn-primary px-3 py-1 text-xs font-black font-mono"
+                  className="brutal-btn brutal-btn-yellow px-3 py-1 text-xs font-black min-h-[32px]"
                 >
-                  OPEN & RUN
+                  LOAD QUERY
                 </button>
               </div>
             </div>
@@ -505,33 +457,38 @@ ORDER BY total_items DESC;`);
         </div>
       )}
 
-      {/* Tab: History */}
+      {/* Tab 4: Query History */}
       {activeTab === 'history' && (
-        <div className="brutal-panel p-5 space-y-3">
-          <h3 className="font-display text-sm font-black text-white uppercase">// QUERY EXECUTION HISTORY</h3>
+        <div className="brutal-panel p-4 space-y-3 bg-[#161b22]">
+          <div className="flex items-center justify-between border-b-2 border-black pb-2">
+            <span className="text-white font-black text-xs uppercase">// RECENT QUERY EXECUTION LOGS</span>
+            <span className="text-slate-400 text-[10px]">Total: {queryHistory.length}</span>
+          </div>
+
           <div className="space-y-2">
-            {queryHistory.map((item) => (
-              <div
-                key={item.id}
-                className="neu-inset-well p-3 flex items-center justify-between text-xs font-mono"
-              >
-                <div className="truncate pr-4">
-                  <p className="text-slate-200 truncate font-bold">{item.sql}</p>
-                  <span className="text-[10px] text-slate-500">{item.database} • {item.timestamp}</span>
+            {queryHistory.map((h) => (
+              <div key={h.id} className="brutal-box p-3 bg-[#0d1117] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="truncate flex-1">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <span className="brutal-badge bg-[#00ff66] text-black text-[8px]">SUCCESS</span>
+                    <span className="text-slate-400 text-[10px]">{h.database}</span>
+                    <span className="text-slate-500">•</span>
+                    <span className="text-slate-400 text-[10px]">{h.executionTimeMs}ms</span>
+                    <span className="text-slate-500">•</span>
+                    <span className="text-slate-400 text-[10px]">{h.timestamp}</span>
+                  </div>
+                  <pre className="text-white text-[11px] truncate">{h.sql}</pre>
                 </div>
 
-                <div className="flex items-center space-x-4 flex-shrink-0">
-                  <span className="text-[#ffee00] font-bold">{item.executionTimeMs}ms</span>
-                  <button
-                    onClick={() => {
-                      setActiveSql(item.sql);
-                      setActiveTab('editor');
-                    }}
-                    className="brutal-btn bg-[#131b2e] px-2.5 py-1 text-[11px] text-cyan-300"
-                  >
-                    RESTORE
-                  </button>
-                </div>
+                <button
+                  onClick={() => {
+                    setActiveSql(h.sql);
+                    setActiveTab('editor');
+                  }}
+                  className="brutal-btn bg-white text-black px-2.5 py-1 text-[10px] font-black self-start sm:self-center"
+                >
+                  RERUN
+                </button>
               </div>
             ))}
           </div>
@@ -540,36 +497,36 @@ ORDER BY total_items DESC;`);
 
       {/* Explain Plan Modal */}
       {isExplainModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-100">
-          <div className="w-full max-w-2xl rounded-xl border-2 border-[#2a364f] bg-[#0c101c] p-6 shadow-[8px_8px_0px_#000000] space-y-4">
-            <div className="flex items-center justify-between border-b-2 border-[#1c253b] pb-3">
-              <h3 className="font-display text-base font-black text-white uppercase flex items-center space-x-2">
-                <Terminal className="h-4 w-4 text-cyan-400" />
-                <span>EXPLAIN ANALYZE Execution Tree</span>
-              </h3>
-              <button onClick={() => setIsExplainModalOpen(false)} className="text-slate-400 hover:text-white font-mono">
-                [ESC]
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-4">
+          <div className="w-full max-w-xl brutal-panel p-5 bg-[#161b22] border-[3px] border-black shadow-[10px_10px_0px_#000] space-y-4">
+            <div className="flex items-center justify-between border-b-2 border-black pb-2">
+              <div className="flex items-center space-x-2">
+                <span className="font-display text-base font-black text-white uppercase">EXPLAIN (ANALYZE, BUFFERS) Plan</span>
+                <span className="brutal-badge bg-[#00ff66] text-black">42MS</span>
+              </div>
+              <button
+                onClick={() => setIsExplainModalOpen(false)}
+                className="brutal-badge bg-white text-black cursor-pointer"
+              >
+                CLOSE
               </button>
             </div>
 
-            <div className="space-y-2 text-xs font-mono">
-              <div className="neu-inset-well p-3 text-cyan-300 font-bold">
-                ↳ Sort (Sort Key: total_mrr_usd DESC) [Cost: 184.20 • 42ms]
-              </div>
-              <div className="neu-inset-well p-3 ml-4 text-emerald-300 font-bold">
-                ↳ HashAggregate (Group Key: signup_month, plan_tier) [Cost: 142.10 • 18ms]
-              </div>
-              <div className="neu-inset-well p-3 ml-8 text-[#ffee00] font-bold">
-                ↳ Index Scan using idx_cust_created_at on customers [Cost: 12.40 • 4ms]
+            <div className="space-y-2">
+              <div className="brutal-box p-3 bg-[#0d1117] space-y-1.5">
+                <div className="text-[#ffee00] font-black text-xs">&gt; Aggregate (cost=42.80..42.85 rows=3 width=48)</div>
+                <div className="text-slate-300 text-[11px] pl-4">&gt; Sort (sort method: quicksort memory: 28kB)</div>
+                <div className="text-slate-300 text-[11px] pl-8">&gt; HashAggregate (batches: 1 memory: 32kB)</div>
+                <div className="text-[#00f0ff] text-[11px] pl-12 font-black">&gt; Index Scan using idx_cust_created on public.customers (cost=0.28..38.12)</div>
               </div>
             </div>
 
-            <div className="flex justify-end pt-3 border-t-2 border-[#1c253b]">
+            <div className="flex justify-end">
               <button
                 onClick={() => setIsExplainModalOpen(false)}
-                className="brutal-btn brutal-btn-primary px-4 py-1.5 text-xs font-black"
+                className="brutal-btn brutal-btn-yellow px-4 py-1.5 font-black"
               >
-                CLOSE PLAN
+                DONE
               </button>
             </div>
           </div>
@@ -578,28 +535,32 @@ ORDER BY total_items DESC;`);
 
       {/* Save Query Modal */}
       {isSaveModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-100">
-          <div className="w-full max-w-md rounded-xl border-2 border-[#2a364f] bg-[#0c101c] p-6 shadow-[8px_8px_0px_#000000] space-y-4">
-            <h3 className="font-display text-base font-black text-white uppercase">SAVE QUERY TO MESH LIBRARY</h3>
-            <div>
-              <label className="text-xs font-mono text-slate-300 block mb-1">TITLE</label>
-              <input
-                type="text"
-                value={saveTitle}
-                onChange={(e) => setSaveTitle(e.target.value)}
-                className="w-full rounded-lg border-2 border-[#2a364f] bg-[#080c16] px-3 py-2 text-xs text-white font-mono outline-none"
-              />
-            </div>
-            <div className="flex justify-end space-x-2 pt-3">
-              <button onClick={() => setIsSaveModalOpen(false)} className="brutal-btn bg-[#131b2e] px-3 py-1.5 text-xs text-slate-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-4">
+          <div className="w-full max-w-md brutal-panel p-5 bg-[#161b22] border-[3px] border-black shadow-[10px_10px_0px_#000] space-y-4">
+            <h3 className="font-display text-base font-black text-white uppercase">SAVE QUERY TO TEAM LIBRARY</h3>
+            <input
+              type="text"
+              value={saveTitle}
+              onChange={(e) => setSaveTitle(e.target.value)}
+              placeholder="Query title (e.g. 'MRR Cohort Retention Analysis')..."
+              className="w-full brutal-box px-3 py-2 text-white bg-[#0d1117] outline-none"
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setIsSaveModalOpen(false)}
+                className="brutal-btn bg-[#21262d] text-white px-3 py-1.5"
+              >
                 CANCEL
               </button>
               <button
                 onClick={() => {
-                  saveCurrentQuery(saveTitle || 'Untitled Query', 'Saved via SQL IDE', ['Custom', 'Analytics']);
-                  setIsSaveModalOpen(false);
+                  if (saveTitle.trim()) {
+                    saveCurrentQuery(saveTitle, 'Saved analytical query', ['production', 'analytics']);
+                    setIsSaveModalOpen(false);
+                    setSaveTitle('');
+                  }
                 }}
-                className="brutal-btn brutal-btn-primary px-4 py-1.5 text-xs font-black"
+                className="brutal-btn brutal-btn-yellow px-4 py-1.5 font-black"
               >
                 SAVE QUERY
               </button>

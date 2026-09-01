@@ -234,9 +234,9 @@ ORDER BY signup_month DESC, total_mrr_usd DESC;`);
   };
 
   return (
-    <div className="fixed inset-y-0 right-0 z-40 flex w-full max-w-lg flex-col border-l-[3px] border-black bg-[#161b22] shadow-[12px_0px_0px_#000000] animate-in slide-in-from-right duration-150 font-mono text-xs">
+    <div className="fixed inset-y-0 right-0 z-50 flex w-full sm:max-w-lg flex-col border-l-[3px] border-black bg-[#161b22] shadow-[12px_0px_0px_#000000] animate-in slide-in-from-right duration-150 font-mono text-xs">
       {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b-[3px] border-black px-5 bg-[#0d1117]">
+      <div className="flex h-14 sm:h-16 items-center justify-between border-b-[3px] border-black px-4 sm:px-5 bg-[#0d1117] flex-shrink-0">
         <div className="flex items-center space-x-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded bg-[#ffee00] text-black border-2 border-black shadow-[2px_2px_0px_#000]">
             <Sparkles className="h-4 w-4 fill-black" />
@@ -245,7 +245,7 @@ ORDER BY signup_month DESC, total_mrr_usd DESC;`);
             <div className="flex items-center space-x-2">
               <span className="font-display text-sm font-black text-white uppercase">DataPilot Copilot</span>
               <span className="brutal-badge bg-[#00f0ff] text-black text-[8px]">
-                WORKSPACE AI
+                AI
               </span>
             </div>
             <p className="text-[10px] text-slate-400">Context: <strong className="text-[#ffee00] uppercase">{currentSection}</strong></p>
@@ -261,7 +261,7 @@ ORDER BY signup_month DESC, total_mrr_usd DESC;`);
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -275,17 +275,17 @@ ORDER BY signup_month DESC, total_mrr_usd DESC;`);
             </div>
 
             <div
-              className={`rounded p-3.5 leading-relaxed max-w-[95%] border-[2.5px] border-black shadow-[4px_4px_0px_#000] ${
+              className={`rounded p-3 sm:p-3.5 leading-relaxed max-w-[95%] border-[2.5px] border-black shadow-[4px_4px_0px_#000] ${
                 msg.sender === 'user'
                   ? 'bg-[#00f0ff] text-black font-bold'
                   : 'bg-[#21262d] text-white'
               }`}
             >
-              <div className="whitespace-pre-wrap font-sans">{msg.text}</div>
+              <div className="whitespace-pre-wrap font-sans text-xs sm:text-sm">{msg.text}</div>
 
               {/* Code snippet block */}
               {msg.codeSnippet && (
-                <div className="mt-3 relative brutal-box p-3 font-mono text-[11px] text-[#00f0ff] bg-[#0d1117]">
+                <div className="mt-3 relative brutal-box p-2.5 sm:p-3 font-mono text-[10px] sm:text-[11px] text-[#00f0ff] bg-[#0d1117]">
                   <div className="flex items-center justify-between pb-2 mb-2 border-b border-black text-[10px] text-slate-400">
                     <span className="font-black text-[#ffee00]">// SQL_REMEDY.SQL</span>
                     <button
@@ -316,7 +316,7 @@ ORDER BY signup_month DESC, total_mrr_usd DESC;`);
                     <button
                       key={i}
                       onClick={() => handleAction(act.actionType, act.payload)}
-                      className="brutal-btn bg-white text-black hover:bg-[#ffee00] px-2.5 py-1 text-[10px] font-black"
+                      className="brutal-btn bg-white text-black hover:bg-[#ffee00] px-2.5 py-1.5 text-[10px] font-black min-h-[32px]"
                     >
                       <span>{act.label}</span>
                       <ArrowRight className="h-3 w-3 ml-1" />
@@ -331,26 +331,26 @@ ORDER BY signup_month DESC, total_mrr_usd DESC;`);
       </div>
 
       {/* Suggested Prompts */}
-      <div className="border-t-[3px] border-black bg-[#0d1117] px-4 py-2.5">
+      <div className="border-t-[3px] border-black bg-[#0d1117] px-3 sm:px-4 py-2 sm:py-2.5 flex-shrink-0">
         <div className="text-[9px] font-black text-[#ffee00] uppercase tracking-wider mb-1.5">
           // QUICK PROMPTS
         </div>
         <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => handleSendPrompt('Why is my dashboard slow?')}
-            className="brutal-btn bg-[#21262d] text-white hover:bg-[#ffee00] hover:text-black px-2 py-1 text-[10px]"
+            className="brutal-btn bg-[#21262d] text-white hover:bg-[#ffee00] hover:text-black px-2 py-1.5 text-[10px] min-h-[32px]"
           >
             ⚡ Why is dashboard slow?
           </button>
           <button
             onClick={() => handleSendPrompt('My database isn\'t connecting.')}
-            className="brutal-btn bg-[#21262d] text-white hover:bg-[#ffee00] hover:text-black px-2 py-1 text-[10px]"
+            className="brutal-btn bg-[#21262d] text-white hover:bg-[#ffee00] hover:text-black px-2 py-1.5 text-[10px] min-h-[32px]"
           >
             🔌 Inspect DB connection
           </button>
           <button
             onClick={() => handleSendPrompt('Show monthly revenue for the last 12 months.')}
-            className="brutal-btn bg-[#21262d] text-white hover:bg-[#ffee00] hover:text-black px-2 py-1 text-[10px]"
+            className="brutal-btn bg-[#21262d] text-white hover:bg-[#ffee00] hover:text-black px-2 py-1.5 text-[10px] min-h-[32px]"
           >
             📊 Monthly revenue SQL
           </button>
@@ -358,7 +358,7 @@ ORDER BY signup_month DESC, total_mrr_usd DESC;`);
       </div>
 
       {/* Chat Input Bar */}
-      <div className="border-t-[3px] border-black bg-[#0d1117] p-3.5">
+      <div className="border-t-[3px] border-black bg-[#0d1117] p-3 sm:p-3.5 flex-shrink-0">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -371,12 +371,12 @@ ORDER BY signup_month DESC, total_mrr_usd DESC;`);
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask Copilot anything about your data..."
-            className="w-full brutal-box px-3 py-2 text-xs text-white placeholder-slate-500 outline-none bg-[#0d1117]"
+            className="w-full brutal-box px-3 py-2 text-xs text-white placeholder-slate-500 outline-none bg-[#0d1117] min-h-[40px]"
           />
           <button
             type="submit"
             disabled={!input.trim()}
-            className="brutal-btn brutal-btn-yellow px-4 py-2 text-xs font-black disabled:opacity-40"
+            className="brutal-btn brutal-btn-yellow px-4 py-2 text-xs font-black disabled:opacity-40 min-h-[40px] min-w-[44px]"
           >
             <Send className="h-4 w-4" />
           </button>

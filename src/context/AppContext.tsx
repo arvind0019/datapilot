@@ -46,6 +46,8 @@ interface AppContextType {
   setEnvironment: (env: Environment) => void;
   isSidebarCollapsed: boolean;
   setIsSidebarCollapsed: (collapsed: boolean) => void;
+  isMobileNavOpen: boolean;
+  setIsMobileNavOpen: (open: boolean) => void;
 
   // Search & Dialogs
   isCommandPaletteOpen: boolean;
@@ -150,6 +152,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [currentSection, setCurrentSection] = useState<NavSection>('overview');
   const [environment, setEnvironment] = useState<Environment>('production');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState<boolean>(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
   const [isAICopilotOpen, setIsAICopilotOpen] = useState<boolean>(false);
   const [copilotInitialPrompt, setCopilotInitialPrompt] = useState<string>('');
@@ -224,6 +227,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       if (e.key === 'Escape') {
         setIsCommandPaletteOpen(false);
+        setIsMobileNavOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -246,6 +250,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const openCopilotWithPrompt = (prompt: string) => {
     setCopilotInitialPrompt(prompt);
     setIsAICopilotOpen(true);
+    setIsMobileNavOpen(false);
   };
 
   const testConnection = async (id: string) => {
@@ -594,6 +599,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setEnvironment,
         isSidebarCollapsed,
         setIsSidebarCollapsed,
+        isMobileNavOpen,
+        setIsMobileNavOpen,
         isCommandPaletteOpen,
         setIsCommandPaletteOpen,
         isAICopilotOpen,

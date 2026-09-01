@@ -3,13 +3,12 @@ import {
   Database, 
   Plus, 
   RefreshCw, 
-  Lock, 
   Table, 
   Terminal, 
   X
 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
-import { DatabaseType, Environment, DataSource } from '../../../types';
+import { DatabaseType, Environment, DataSource, SchemaTable, TableColumn } from '../../../types';
 import { MOCK_SCHEMA_TABLES } from '../../../data/mockData';
 
 export const DataSourcesView: React.FC = () => {
@@ -59,9 +58,9 @@ export const DataSourcesView: React.FC = () => {
       host: formData.host || 'db-cluster.internal.datapilot.io',
       port: Number(formData.port),
       database: formData.database,
-      username: formData.username || 'datapilot_read',
+      username: formData.username || 'admin',
       status: 'connected',
-      latencyMs: 24,
+      latencyMs: 22,
       environment: formData.environment,
       ssl: formData.ssl,
       poolSize: Number(formData.poolSize)
@@ -82,36 +81,45 @@ export const DataSourcesView: React.FC = () => {
     });
   };
 
-  const currentTables = selectedSchemaSource ? (MOCK_SCHEMA_TABLES[selectedSchemaSource.id] || MOCK_SCHEMA_TABLES['ds-1']) : [];
+  const tableList: SchemaTable[] = (selectedSchemaSource && MOCK_SCHEMA_TABLES[selectedSchemaSource.id]) 
+    ? MOCK_SCHEMA_TABLES[selectedSchemaSource.id] 
+    : MOCK_SCHEMA_TABLES['ds-1'] || [];
+
+  const currentSchemaTable: SchemaTable = tableList.find((t: SchemaTable) => t.name === selectedTableForPreview) || tableList[0] || {
+    name: 'customers',
+    schema: 'public',
+    rowCount: 128450,
+    columns: []
+  };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-150">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-4 animate-in fade-in duration-150 font-mono text-xs">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b-[3px] border-black pb-3">
         <div>
           <div className="flex items-center space-x-2">
-            <h1 className="font-display text-2xl font-black tracking-tight text-white uppercase">
-              Data Sources & Connectors
+            <h1 className="font-display text-xl sm:text-2xl font-black tracking-tight text-white uppercase">
+              Data Sources & Catalogs
             </h1>
-            <span className="rounded bg-emerald-400 text-black px-1.5 py-0.5 font-mono text-[10px] font-black border border-black shadow-[2px_2px_0px_#000]">
-              {dataSources.length} ENGINES
+            <span className="brutal-badge bg-[#00f0ff] text-black">
+              {dataSources.length} SOURCES
             </span>
           </div>
-          <p className="text-xs font-mono text-slate-400 mt-1">
-            // Operational databases, columnar data warehouses, and streaming ingest connectors.
+          <p className="text-slate-400 text-xs mt-0.5">
+            // Heterogeneous connection pool manager, schema auto-discovery, and latency health checks.
           </p>
         </div>
 
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="brutal-btn brutal-btn-primary px-4 py-2 text-xs font-black tracking-tight"
+          className="brutal-btn brutal-btn-yellow px-4 py-2 text-xs font-black min-h-[40px] self-start sm:self-auto"
         >
           <Plus className="h-4 w-4 mr-1.5" />
           <span>CONNECT NEW DATABASE</span>
         </button>
       </div>
 
-      {/* Sources Grid */}
+      {/* Grid of Data Source Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {dataSources.map((ds) => {
           const isTesting = testingId === ds.id;
@@ -119,90 +127,65 @@ export const DataSourcesView: React.FC = () => {
           return (
             <div
               key={ds.id}
-              className="brutal-panel brutal-panel-hover p-5 flex flex-col justify-between"
+              className="brutal-panel brutal-panel-hover p-4 sm:p-5 flex flex-col justify-between space-y-4 bg-[#161b22]"
             >
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="rounded bg-[#12192a] px-2 py-0.5 font-mono text-[11px] font-black text-cyan-300 border border-[#2a364f] shadow-[1.5px_1.5px_0px_#000]">
-                    {ds.type}
-                  </span>
-                  
-                  <div className="flex items-center space-x-1.5">
-                    <span className="rounded bg-black px-1.5 py-0.2 font-mono text-[9px] font-bold text-slate-300 uppercase border border-[#2a364f]">
-                      {ds.environment}
-                    </span>
-
-                    <span className={`rounded px-2 py-0.5 font-mono text-[9px] font-black uppercase border border-black shadow-[1.5px_1.5px_0px_#000] ${
-                      ds.status === 'connected' ? 'bg-emerald-400 text-black' :
-                      ds.status === 'degraded' ? 'bg-[#ffee00] text-black' :
-                      'bg-rose-500 text-black'
-                    }`}>
-                      {ds.status}
-                    </span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded border-2 border-black bg-[#ffee00] text-black shadow-[2px_2px_0px_#000]">
+                      <Database className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <h3 className="font-display text-sm font-black text-white">{ds.name}</h3>
+                      <p className="text-[10px] text-slate-400">{ds.type} • {ds.database}</p>
+                    </div>
                   </div>
+
+                  <span className={`brutal-badge ${
+                    ds.status === 'connected' ? 'bg-[#00ff66] text-black' :
+                    ds.status === 'degraded' ? 'bg-[#ffee00] text-black' :
+                    'bg-[#ff007f] text-white'
+                  }`}>
+                    {ds.status}
+                  </span>
                 </div>
 
-                <h3 className="font-display text-base font-black text-white uppercase tracking-tight">
-                  {ds.name}
-                </h3>
-                <p className="font-mono text-xs text-cyan-300 mt-1 truncate">
-                  {ds.database}
-                </p>
-
-                {/* Connection Specs inside Neumorphic Well */}
-                <div className="mt-4 grid grid-cols-2 gap-2 text-xs neu-inset-well p-3">
-                  <div>
-                    <span className="text-[9px] text-slate-500 font-mono uppercase block">HOST</span>
-                    <span className="font-mono text-slate-300 truncate block text-[11px]" title={ds.host}>
-                      {ds.host.split('.')[0]}...
+                {/* Host & Port info box */}
+                <div className="brutal-box p-2.5 bg-[#0d1117] space-y-1 my-3 text-[11px]">
+                  <div className="flex justify-between text-slate-400">
+                    <span>Host:</span>
+                    <span className="text-white truncate max-w-[170px]">{ds.host}:{ds.port}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Latency:</span>
+                    <span className={`font-black ${ds.latencyMs < 30 ? 'text-[#00ff66]' : 'text-[#ffee00]'}`}>
+                      {ds.latencyMs > 0 ? `${ds.latencyMs}ms` : 'Offline'}
                     </span>
                   </div>
-                  <div>
-                    <span className="text-[9px] text-slate-500 font-mono uppercase block">PORT / SSL</span>
-                    <span className="font-mono text-slate-300 text-[11px]">
-                      {ds.port || 'DEFAULT'} {ds.ssl ? '• SSL' : ''}
-                    </span>
+                  <div className="flex justify-between text-slate-400">
+                    <span>Catalog:</span>
+                    <span className="text-[#00f0ff] font-bold">{ds.tablesCount} tables ({ds.sizeGb} GB)</span>
                   </div>
-                  <div>
-                    <span className="text-[9px] text-slate-500 font-mono uppercase block">LATENCY</span>
-                    <span className="font-mono text-emerald-400 text-[11px] font-black">
-                      {ds.latencyMs > 0 ? `${ds.latencyMs} MS` : 'N/A'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[9px] text-slate-500 font-mono uppercase block">STORAGE</span>
-                    <span className="font-mono text-slate-300 text-[11px]">
-                      {ds.tablesCount} TBL • {ds.sizeGb} GB
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between text-[10px] font-mono text-slate-500">
-                  <span className="flex items-center space-x-1">
-                    <Lock className="h-3 w-3" />
-                    <span>AUTH: <strong className="text-slate-400">••••••••</strong></span>
-                  </span>
-                  <span>Tested {ds.lastTested}</span>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-5 pt-3 border-t border-[#1c253b] flex items-center justify-between gap-2.5">
+              <div className="pt-2 border-t-2 border-black flex items-center justify-between gap-2">
                 <button
-                  onClick={() => handleTest(ds.id)}
-                  disabled={isTesting}
-                  className="flex-1 brutal-btn bg-[#131b2e] hover:bg-[#1a253f] text-slate-200 py-1.5 text-xs font-bold font-mono disabled:opacity-50"
+                  onClick={() => setSelectedSchemaSource(ds)}
+                  className="brutal-btn bg-[#21262d] text-white px-3 py-1.5 text-xs font-black min-h-[36px] flex-1"
                 >
-                  <RefreshCw className={`h-3 w-3 mr-1.5 ${isTesting ? 'animate-spin text-cyan-400' : 'text-slate-400'}`} />
-                  <span>{isTesting ? 'TESTING...' : 'TEST CONNECTION'}</span>
+                  <Table className="h-3.5 w-3.5 mr-1" />
+                  <span>SCHEMA</span>
                 </button>
 
                 <button
-                  onClick={() => setSelectedSchemaSource(ds)}
-                  className="brutal-btn bg-[#06b6d4]/15 hover:bg-[#06b6d4]/25 text-cyan-300 border-[#06b6d4]/50 py-1.5 px-3 text-xs font-mono font-bold"
+                  onClick={() => handleTest(ds.id)}
+                  disabled={isTesting}
+                  className="brutal-btn brutal-btn-yellow px-3 py-1.5 text-xs font-black min-h-[36px] flex-1"
                 >
-                  <Table className="h-3 w-3 mr-1" />
-                  <span>SCHEMA</span>
+                  <RefreshCw className={`h-3.5 w-3.5 mr-1 ${isTesting ? 'animate-spin' : ''}`} />
+                  <span>{isTesting ? 'TESTING...' : 'TEST'}</span>
                 </button>
               </div>
             </div>
@@ -210,126 +193,98 @@ export const DataSourcesView: React.FC = () => {
         })}
       </div>
 
-      {/* Schema Browser Drawer */}
+      {/* Schema Explorer Drawer */}
       {selectedSchemaSource && (
         <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="h-full w-full max-w-3xl border-l-2 border-[#2a364f] bg-[#0c101c] p-6 shadow-[12px_0px_0px_#000000] overflow-y-auto flex flex-col justify-between animate-in slide-in-from-right duration-200">
-            <div>
-              <div className="flex items-center justify-between border-b-2 border-[#1c253b] pb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#06b6d4] text-black border border-black shadow-[2px_2px_0px_#000]">
-                    <Database className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-display text-base font-black text-white uppercase">
-                      {selectedSchemaSource.name}
-                    </h3>
-                    <p className="text-xs text-slate-400 font-mono">
-                      Database: <span className="text-cyan-300 font-bold">{selectedSchemaSource.database}</span> • {currentTables.length} Tables
-                    </p>
-                  </div>
+          <div className="h-full w-full sm:max-w-2xl border-l-[3px] border-black bg-[#161b22] p-4 sm:p-6 shadow-[12px_0px_0px_#000000] overflow-y-auto flex flex-col justify-between font-mono text-xs animate-in slide-in-from-right duration-200">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b-2 border-black pb-3">
+                <div>
+                  <h3 className="font-display text-base font-black text-white uppercase">
+                    {selectedSchemaSource.name} Schema Explorer
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {selectedSchemaSource.type} • {selectedSchemaSource.tablesCount} Tables Indexed
+                  </p>
                 </div>
 
                 <button
                   onClick={() => setSelectedSchemaSource(null)}
-                  className="rounded-md bg-[#131b2e] border border-[#2a364f] p-1.5 text-slate-300 hover:text-white"
+                  className="brutal-badge bg-white text-black cursor-pointer p-1.5"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
-              {/* Table Selector Tabs */}
-              <div className="mt-4 flex flex-wrap gap-1.5 border-b border-[#1c253b] pb-3">
-                {currentTables.map((t) => (
+              {/* Table Selector Pills */}
+              <div className="flex items-center space-x-1.5 overflow-x-auto pb-2 scrollbar-none">
+                {tableList.map((tbl: SchemaTable) => (
                   <button
-                    key={t.name}
-                    onClick={() => setSelectedTableForPreview(t.name)}
-                    className={`flex items-center space-x-1.5 rounded-lg px-3 py-1.5 text-xs font-mono transition-all ${
-                      selectedTableForPreview === t.name
-                        ? 'bg-[#06b6d4] text-black font-black border border-black shadow-[2px_2px_0px_#000]'
-                        : 'bg-[#12192a] text-slate-400 border border-[#2a364f] hover:text-white'
+                    key={tbl.name}
+                    onClick={() => setSelectedTableForPreview(tbl.name)}
+                    className={`rounded px-2.5 py-1 text-xs font-black border-2 border-black whitespace-nowrap min-h-[32px] cursor-pointer ${
+                      selectedTableForPreview === tbl.name
+                        ? 'bg-[#ffee00] text-black shadow-[2px_2px_0px_#000]'
+                        : 'bg-[#0d1117] text-white hover:bg-[#21262d]'
                     }`}
                   >
-                    <Table className="h-3 w-3" />
-                    <span>{t.name}</span>
-                    <span className="text-[10px]">({t.rowCount.toLocaleString()})</span>
+                    {tbl.schema}.{tbl.name} ({tbl.rowCount.toLocaleString()})
                   </button>
                 ))}
               </div>
 
-              {/* Table Columns */}
-              {(() => {
-                const table = currentTables.find(t => t.name === selectedTableForPreview) || currentTables[0];
-                if (!table) return null;
+              {/* Selected Table Columns Details */}
+              <div className="brutal-box p-3 bg-[#0d1117] space-y-2">
+                <div className="flex items-center justify-between border-b border-black pb-2">
+                  <span className="font-black text-white uppercase text-xs">
+                    TABLE: {currentSchemaTable.schema}.{currentSchemaTable.name}
+                  </span>
+                  <span className="brutal-badge bg-[#00ff66] text-black">
+                    {currentSchemaTable.rowCount.toLocaleString()} ROWS
+                  </span>
+                </div>
 
-                return (
-                  <div className="mt-5 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-mono text-sm font-black text-white uppercase">public.{table.name}</h4>
-                        <p className="text-xs text-slate-400 mt-0.5">{table.description}</p>
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          setActiveSql(`SELECT * FROM public.${table.name} LIMIT 25;`);
-                          setCurrentSection('sql');
-                        }}
-                        className="brutal-btn brutal-btn-primary px-3 py-1.5 text-xs font-mono font-bold"
-                      >
-                        <Terminal className="h-3.5 w-3.5 mr-1" />
-                        <span>QUERY TABLE IN SQL IDE</span>
-                      </button>
-                    </div>
-
-                    <div className="overflow-x-auto rounded-xl border-2 border-[#2a364f] bg-[#080c16] shadow-[4px_4px_0px_#000]">
-                      <table className="w-full text-left text-xs font-mono">
-                        <thead className="border-b-2 border-[#1c253b] bg-[#0c101c] text-[10px] uppercase text-slate-400 font-black">
-                          <tr>
-                            <th className="px-4 py-2.5">COLUMN NAME</th>
-                            <th className="px-4 py-2.5">DATA TYPE</th>
-                            <th className="px-4 py-2.5">KEY ATTRIBUTES</th>
-                            <th className="px-4 py-2.5">NULLABLE</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-[#1c253b] text-slate-300">
-                          {table.columns.map((col, idx) => (
-                            <tr key={idx} className="hover:bg-[#12192a]">
-                              <td className="px-4 py-2.5 font-bold text-white">{col.name}</td>
-                              <td className="px-4 py-2.5 text-cyan-400">{col.type}</td>
-                              <td className="px-4 py-2.5">
-                                {col.isPrimary && (
-                                  <span className="rounded bg-[#ffee00] text-black px-1.5 py-0.5 text-[9px] font-black border border-black shadow-[1.5px_1.5px_0px_#000]">
-                                    PRIMARY KEY (PK)
-                                  </span>
-                                )}
-                                {col.isForeign && (
-                                  <span className="rounded bg-[#06b6d4] text-black px-1.5 py-0.5 text-[9px] font-black border border-black shadow-[1.5px_1.5px_0px_#000]">
-                                    FK → {col.foreignTable}({col.foreignColumn})
-                                  </span>
-                                )}
-                                {!col.isPrimary && !col.isForeign && (
-                                  <span className="text-slate-600">—</span>
-                                )}
-                              </td>
-                              <td className="px-4 py-2.5 text-slate-500 font-bold">
-                                {col.nullable ? 'YES' : 'NO'}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                );
-              })()}
+                <div className="overflow-x-auto rounded border border-black bg-[#161b22]">
+                  <table className="w-full text-left text-xs font-mono">
+                    <thead className="bg-[#21262d] text-white text-[10px] uppercase font-black border-b border-black">
+                      <tr>
+                        <th className="px-3 py-1.5">COLUMN</th>
+                        <th className="px-3 py-1.5">TYPE</th>
+                        <th className="px-3 py-1.5">KEY</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-black text-slate-200">
+                      {currentSchemaTable.columns.map((c: TableColumn, i: number) => (
+                        <tr key={i}>
+                          <td className="px-3 py-1.5 font-bold text-white">{c.name}</td>
+                          <td className="px-3 py-1.5 text-slate-400">{c.type}</td>
+                          <td className="px-3 py-1.5">
+                            {c.isPrimary && <span className="brutal-badge bg-[#ffee00] text-black text-[8px]">PK</span>}
+                            {c.isForeign && <span className="brutal-badge bg-[#00f0ff] text-black text-[8px]">FK</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
 
-            <div className="border-t-2 border-[#1c253b] pt-4 mt-6 flex items-center justify-between text-xs font-mono text-slate-400">
-              <span>Synchronized via Antigravity Mesh Crawler</span>
+            <div className="pt-4 border-t-2 border-black flex items-center justify-between gap-2">
+              <button
+                onClick={() => {
+                  setActiveSql(`SELECT * FROM ${currentSchemaTable.schema}.${currentSchemaTable.name} LIMIT 50;`);
+                  setCurrentSection('sql');
+                }}
+                className="brutal-btn brutal-btn-yellow px-4 py-2 font-black text-xs flex-1"
+              >
+                <Terminal className="h-3.5 w-3.5 mr-1" />
+                <span>QUERY TABLE IN SQL IDE</span>
+              </button>
+
               <button
                 onClick={() => setSelectedSchemaSource(null)}
-                className="brutal-btn bg-[#131b2e] text-slate-200 px-4 py-1.5"
+                className="brutal-btn bg-white text-black px-4 py-2 font-black text-xs"
               >
                 CLOSE
               </button>
@@ -338,112 +293,88 @@ export const DataSourcesView: React.FC = () => {
         </div>
       )}
 
-      {/* Add Database Connection Modal */}
+      {/* Connect Database Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-100">
-          <div className="w-full max-w-lg rounded-xl border-2 border-[#2a364f] bg-[#0c101c] p-6 shadow-[8px_8px_0px_#000000]">
-            <div className="flex items-center justify-between border-b-2 border-[#1c253b] pb-3">
-              <h3 className="font-display text-base font-black text-white uppercase flex items-center space-x-2">
-                <Database className="h-4 w-4 text-cyan-400" />
-                <span>Connect New Data Source</span>
-              </h3>
-              <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400 hover:text-white font-mono">
-                [ESC]
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-4">
+          <div className="w-full max-w-lg brutal-panel p-5 bg-[#161b22] border-[3px] border-black shadow-[10px_10px_0px_#000] space-y-4">
+            <div className="flex items-center justify-between border-b-2 border-black pb-2">
+              <h3 className="font-display text-base font-black text-white uppercase">CONNECT DATA SOURCE</h3>
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="brutal-badge bg-white text-black cursor-pointer"
+              >
+                ESC
               </button>
             </div>
 
-            <form onSubmit={handleAddSubmit} className="mt-4 space-y-3.5 text-xs font-mono">
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleAddSubmit} className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-300 uppercase block mb-1">DATABASE TYPE</label>
+                  <label className="block text-[10px] font-bold text-slate-300 uppercase mb-1">Source Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g. Analytics Data Warehouse"
+                    className="w-full brutal-box px-2.5 py-1.5 text-white bg-[#0d1117] outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-300 uppercase mb-1">Engine Type</label>
                   <select
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value as DatabaseType })}
-                    className="w-full rounded-lg border-2 border-[#2a364f] bg-[#080c16] px-3 py-2 text-white outline-none"
+                    className="w-full brutal-box px-2.5 py-1.5 text-white bg-[#0d1117] outline-none"
                   >
                     <option value="PostgreSQL">PostgreSQL</option>
-                    <option value="MySQL">MySQL</option>
-                    <option value="BigQuery">Google BigQuery</option>
                     <option value="Snowflake">Snowflake</option>
-                    <option value="Redshift">Amazon Redshift</option>
-                    <option value="SQLite">SQLite File</option>
-                    <option value="REST API">REST API Feed</option>
+                    <option value="BigQuery">Google BigQuery</option>
+                    <option value="MySQL">MySQL</option>
+                    <option value="REST API">REST API Endpoint</option>
                   </select>
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-300 uppercase block mb-1">ENVIRONMENT</label>
-                  <select
-                    value={formData.environment}
-                    onChange={(e) => setFormData({ ...formData, environment: e.target.value as Environment })}
-                    className="w-full rounded-lg border-2 border-[#2a364f] bg-[#080c16] px-3 py-2 text-white outline-none"
-                  >
-                    <option value="production">Production</option>
-                    <option value="staging">Staging</option>
-                    <option value="development">Development</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[10px] font-bold text-slate-300 uppercase block mb-1">DISPLAY NAME</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Analytics Read Replica"
-                  className="w-full rounded-lg border-2 border-[#2a364f] bg-[#080c16] px-3 py-2 text-white outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-2">
-                  <label className="text-[10px] font-bold text-slate-300 uppercase block mb-1">HOST ENDPOINT</label>
+                  <label className="block text-[10px] font-bold text-slate-300 uppercase mb-1">Host Endpoint</label>
                   <input
                     type="text"
                     value={formData.host}
                     onChange={(e) => setFormData({ ...formData, host: e.target.value })}
-                    placeholder="db.internal.example.com"
-                    className="w-full rounded-lg border-2 border-[#2a364f] bg-[#080c16] px-3 py-2 text-white outline-none"
+                    placeholder="db.us-east-1.rds.amazonaws.com"
+                    className="w-full brutal-box px-2.5 py-1.5 text-white bg-[#0d1117] outline-none"
                   />
                 </div>
+
                 <div>
-                  <label className="text-[10px] font-bold text-slate-300 uppercase block mb-1">PORT</label>
+                  <label className="block text-[10px] font-bold text-slate-300 uppercase mb-1">Database Name</label>
                   <input
-                    type="number"
-                    value={formData.port}
-                    onChange={(e) => setFormData({ ...formData, port: Number(e.target.value) })}
-                    className="w-full rounded-lg border-2 border-[#2a364f] bg-[#080c16] px-3 py-2 text-white outline-none"
+                    type="text"
+                    required
+                    value={formData.database}
+                    onChange={(e) => setFormData({ ...formData, database: e.target.value })}
+                    placeholder="production_dw"
+                    className="w-full brutal-box px-2.5 py-1.5 text-white bg-[#0d1117] outline-none"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="text-[10px] font-bold text-slate-300 uppercase block mb-1">DATABASE NAME</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.database}
-                  onChange={(e) => setFormData({ ...formData, database: e.target.value })}
-                  placeholder="analytics_prod"
-                  className="w-full rounded-lg border-2 border-[#2a364f] bg-[#080c16] px-3 py-2 text-white outline-none"
-                />
-              </div>
-
-              <div className="flex items-center justify-end space-x-2.5 pt-3 border-t-2 border-[#1c253b]">
+              <div className="flex justify-end space-x-2 pt-3 border-t-2 border-black">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="brutal-btn bg-[#131b2e] px-4 py-1.5 text-slate-300"
+                  className="brutal-btn bg-[#21262d] text-white px-3 py-1.5"
                 >
                   CANCEL
                 </button>
                 <button
                   type="submit"
-                  className="brutal-btn brutal-btn-primary px-5 py-1.5 text-xs font-black"
+                  className="brutal-btn brutal-btn-yellow px-4 py-1.5 font-black"
                 >
-                  SAVE & CONNECT
+                  SAVE & TEST CONNECTION
                 </button>
               </div>
             </form>

@@ -2,6 +2,7 @@ import React from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
+import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { CommandPalette } from './components/layout/CommandPalette';
 import { AICopilotDrawer } from './components/layout/AICopilotDrawer';
 import { ToastContainer } from './components/layout/ToastContainer';
@@ -65,8 +66,8 @@ const MainLayout: React.FC = () => {
   };
 
   return (
-    <div className={`flex min-h-screen w-full ${getThemeClass()} ${density === 'compact' ? 'text-xs' : 'text-sm'} selection:bg-cyan-500/25 selection:text-cyan-200 font-sans antialiased overflow-x-hidden`}>
-      {/* Left Collapsible Sidebar */}
+    <div className={`flex min-h-[100dvh] w-full ${getThemeClass()} ${density === 'compact' ? 'text-xs' : 'text-sm'} selection:bg-[#ffee00] selection:text-black font-sans antialiased overflow-x-hidden`}>
+      {/* Left Sidebar (Desktop fixed + Mobile slide-over drawer) */}
       <Sidebar />
 
       {/* Main Content Area */}
@@ -74,11 +75,14 @@ const MainLayout: React.FC = () => {
         {/* Top Header */}
         <Header />
 
-        {/* Dynamic Viewport Container */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-[1600px] w-full mx-auto">
+        {/* Dynamic Viewport Container with safe bottom padding for mobile bar */}
+        <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-8 pb-24 md:pb-8 max-w-[1600px] w-full mx-auto">
           {renderCurrentView()}
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation Bar (Android & iOS) */}
+      <MobileBottomNav />
 
       {/* Global Command Palette (Ctrl+K) */}
       <CommandPalette />
