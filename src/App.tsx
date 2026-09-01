@@ -8,7 +8,7 @@ import { AICopilotDrawer } from './components/layout/AICopilotDrawer';
 import { ToastContainer } from './components/layout/ToastContainer';
 import { AuthModal } from './components/auth/AuthModal';
 
-// 11 Module Views
+// 12 Module Views
 import { OverviewView } from './components/modules/overview/OverviewView';
 import { DataSourcesView } from './components/modules/sources/DataSourcesView';
 import { SqlWorkspaceView } from './components/modules/sql/SqlWorkspaceView';
@@ -19,6 +19,7 @@ import { DebugCenterView } from './components/modules/debug/DebugCenterView';
 import { AccessControlView } from './components/modules/access/AccessControlView';
 import { DeploymentCenterView } from './components/modules/deployments/DeploymentCenterView';
 import { IntegrationHubView } from './components/modules/integrations/IntegrationHubView';
+import { PricingBillingView } from './components/modules/billing/PricingBillingView';
 import { SettingsView } from './components/modules/settings/SettingsView';
 
 const MainLayout: React.FC = () => {
@@ -46,6 +47,8 @@ const MainLayout: React.FC = () => {
         return <DeploymentCenterView />;
       case 'integrations':
         return <IntegrationHubView />;
+      case 'billing':
+        return <PricingBillingView />;
       case 'settings':
         return <SettingsView />;
       default:

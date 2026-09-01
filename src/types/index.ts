@@ -9,6 +9,7 @@ export type NavSection =
   | 'access' 
   | 'deployments' 
   | 'integrations' 
+  | 'billing'
   | 'settings';
 
 export type Environment = 'production' | 'staging' | 'development';
@@ -209,6 +210,7 @@ export interface UserAccount {
   twoFactorEnabled: boolean;
   status: 'active' | 'invited' | 'suspended';
   provider?: 'email' | 'google' | 'github' | 'supabase';
+  planTier?: 'Free' | 'Pro' | 'Enterprise';
 }
 
 export interface PermissionMatrixItem {
@@ -357,4 +359,29 @@ export interface AuthSession {
   user: UserAccount | null;
   isAuthenticated: boolean;
   token?: string;
+}
+
+// 6. Monetization, Pricing & Payment Types
+export type PlanTier = 'Free' | 'Pro' | 'Enterprise';
+export type BillingCycle = 'monthly' | 'annual';
+
+export interface PricingPlan {
+  id: PlanTier;
+  name: string;
+  monthlyPrice: number;
+  annualPrice: number;
+  description: string;
+  badge?: string;
+  features: string[];
+  isPopular?: boolean;
+}
+
+export interface BillingInvoice {
+  id: string;
+  invoiceNumber: string;
+  date: string;
+  amount: string;
+  status: 'Paid' | 'Pending' | 'Refunded';
+  planName: string;
+  pdfUrl?: string;
 }

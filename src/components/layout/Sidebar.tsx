@@ -14,7 +14,8 @@ import {
   ChevronLeft, 
   ChevronRight,
   Sparkles,
-  X
+  X,
+  CreditCard
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { NavSection } from '../../types';
@@ -69,6 +70,7 @@ export const Sidebar: React.FC = () => {
     { id: 'access', label: 'Access Control', icon: ShieldCheck },
     { id: 'deployments', label: 'Deployments', icon: Rocket, badge: 'LIVE', badgeColor: 'bg-[#00ff66] text-black' },
     { id: 'integrations', label: 'Integrations', icon: Layers, badge: '6', badgeColor: 'bg-white text-black' },
+    { id: 'billing', label: 'Plans & Pricing', icon: CreditCard, badge: 'UPGRADE', badgeColor: 'bg-[#ffee00] text-black' },
     { id: 'settings', label: 'Settings & UI', icon: Sliders },
   ];
 
@@ -108,34 +110,15 @@ export const Sidebar: React.FC = () => {
           <button 
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
             className="flex h-7 w-7 items-center justify-center rounded bg-white text-black border-2 border-black shadow-[2px_2px_0px_#000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer font-black"
-            title={isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
             {isSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </button>
         )}
       </div>
 
-      {/* Workspace Switcher */}
-      {(!isSidebarCollapsed || isMobile) && (
-        <div className="border-b-[3px] border-black p-3 bg-[#0d1117] flex-shrink-0">
-          <div className="brutal-box px-3 py-2 text-xs flex items-center justify-between bg-[#21262d]">
-            <div className="flex items-center space-x-2 truncate">
-              <div className="h-2.5 w-2.5 rounded-full bg-[#00ff66] border border-black" />
-              <span className="font-black text-white font-mono truncate text-[11px]">ACME_CORE_DW</span>
-            </div>
-            <span className="brutal-badge bg-[#ffee00] text-black">
-              PROD
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* Navigation Links */}
-      <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1.5">
-        <div className="px-2 pb-1 text-[9px] font-mono font-black uppercase tracking-widest text-slate-400">
-          {(!isSidebarCollapsed || isMobile) ? '// PLATFORM WORKSPACES' : '///'}
-        </div>
-
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5 font-mono text-xs">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentSection === item.id;
@@ -147,20 +130,20 @@ export const Sidebar: React.FC = () => {
                 setCurrentSection(item.id);
                 if (isMobile) setIsMobileNavOpen(false);
               }}
-              className={`group flex w-full items-center rounded-md px-3 py-2.5 text-xs font-black transition-all duration-100 cursor-pointer min-h-[44px] ${
-                isActive 
-                  ? 'bg-[#ffee00] text-black border-2 border-black shadow-[4px_4px_0px_#000000] translate-x-[-1px] translate-y-[-1px]' 
-                  : 'text-slate-200 hover:bg-[#21262d] hover:text-white border-2 border-transparent hover:border-black hover:shadow-[3px_3px_0px_#000000]'
-              } ${isSidebarCollapsed && !isMobile ? 'justify-center px-1.5' : 'justify-between'}`}
-              title={isSidebarCollapsed && !isMobile ? item.label : undefined}
+              className={`flex w-full items-center rounded-md px-3 py-2.5 font-bold transition-all text-left border-2 cursor-pointer ${
+                isActive
+                  ? 'bg-[#ffee00] text-black border-black shadow-[3px_3px_0px_#000000] font-black'
+                  : 'text-slate-200 border-transparent hover:border-black hover:bg-[#21262d] hover:text-white'
+              } ${isSidebarCollapsed && !isMobile ? 'justify-center px-2' : 'justify-between'}`}
+              title={item.label}
             >
-              <div className="flex items-center space-x-2.5 truncate">
-                <Icon className={`h-4 w-4 flex-shrink-0 ${isActive ? 'text-black' : 'text-slate-400 group-hover:text-white'}`} />
-                {(!isSidebarCollapsed || isMobile) && <span className="truncate uppercase font-mono tracking-tight">{item.label}</span>}
+              <div className="flex items-center space-x-3 truncate">
+                <Icon className={`h-4 w-4 flex-shrink-0 ${isActive ? 'text-black' : 'text-slate-400'}`} />
+                {(!isSidebarCollapsed || isMobile) && <span className="truncate">{item.label}</span>}
               </div>
 
               {(!isSidebarCollapsed || isMobile) && item.badge && (
-                <span className={`ml-auto brutal-badge ${item.badgeColor || 'bg-white text-black'}`}>
+                <span className={`brutal-badge text-[9px] ${item.badgeColor || 'bg-[#ffee00] text-black'}`}>
                   {item.badge}
                 </span>
               )}
@@ -169,51 +152,31 @@ export const Sidebar: React.FC = () => {
         })}
       </div>
 
-      {/* AI Copilot Brutalist Card */}
-      <div className="p-3 border-t-[3px] border-black bg-[#0d1117] flex-shrink-0">
-        {(!isSidebarCollapsed || isMobile) ? (
-          <div className="brutal-panel p-3 bg-[#ffee00] text-black border-2 border-black shadow-[4px_4px_0px_#000] space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-1 text-xs font-black text-black">
-                <Sparkles className="h-4 w-4 fill-black" />
-                <span>COPILOT AI</span>
-              </div>
-              <span className="brutal-badge bg-black text-white">
-                ONLINE
-              </span>
-            </div>
-            <p className="text-[10px] font-mono font-bold text-black leading-tight">
-              3 slow queries • 2 sync errors
-            </p>
-            <button
-              onClick={() => {
-                openCopilotWithPrompt('Perform a full workspace diagnostic check and highlight optimization opportunities.');
-                if (isMobile) setIsMobileNavOpen(false);
-              }}
-              className="w-full brutal-btn bg-black text-white hover:bg-slate-900 py-2 text-[11px] font-black min-h-[40px]"
-            >
-              AUDIT MESH
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={() => openCopilotWithPrompt('Perform a full workspace diagnostic check.')}
-            className="flex h-10 w-10 mx-auto items-center justify-center rounded bg-[#ffee00] text-black border-2 border-black shadow-[3px_3px_0px_#000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none cursor-pointer"
-            title="Open DataPilot Copilot"
-          >
-            <Sparkles className="h-5 w-5 fill-black" />
-          </button>
-        )}
-      </div>
-
-      {/* Bottom Status */}
+      {/* Sidebar Footer */}
       {(!isSidebarCollapsed || isMobile) && (
-        <div className="border-t-[3px] border-black px-3.5 py-2 text-[10px] font-mono font-black flex items-center justify-between bg-black text-white flex-shrink-0">
-          <div className="flex items-center space-x-1.5">
-            <div className="h-2 w-2 rounded-full bg-[#00ff66]" />
-            <span>99.98% HEALTH</span>
+        <div className="p-3 border-t-[3px] border-black bg-[#0d1117] flex-shrink-0 font-mono text-xs space-y-2">
+          {/* AI Copilot Quick Launcher Button */}
+          <button
+            onClick={() => {
+              openCopilotWithPrompt("Give me a comprehensive health audit of all connected databases and slow queries.");
+              if (isMobile) setIsMobileNavOpen(false);
+            }}
+            className="w-full brutal-btn brutal-btn-yellow p-2 text-xs font-black min-h-[38px]"
+          >
+            <Sparkles className="h-3.5 w-3.5 mr-1.5 fill-black" />
+            <span>AI COPILOT AGENT</span>
+          </button>
+
+          <div className="brutal-box p-2 bg-[#161b22] text-[10px] space-y-1">
+            <div className="flex items-center justify-between text-slate-400">
+              <span>SYSTEM:</span>
+              <span className="text-[#00ff66] font-black">99.98% HEALTH</span>
+            </div>
+            <div className="flex items-center justify-between text-slate-400">
+              <span>VERSION:</span>
+              <span className="text-[#00f0ff] font-bold">V2.8.4-PROD</span>
+            </div>
           </div>
-          <span className="text-[#ffee00]">V2.8.4</span>
         </div>
       )}
     </div>
@@ -221,28 +184,28 @@ export const Sidebar: React.FC = () => {
 
   return (
     <>
-      {/* 1. Desktop Fixed Sidebar (Hidden on mobile < md) */}
+      {/* Desktop Sidebar */}
       <aside 
-        className={`hidden md:flex relative z-20 flex-col border-r-[3px] border-black bg-[#161b22] transition-all duration-150 ease-out select-none ${
-          isSidebarCollapsed ? 'w-[76px]' : 'w-64'
+        className={`hidden md:flex flex-col border-r-[3px] border-black bg-[#161b22] transition-all duration-150 z-20 select-none ${
+          isSidebarCollapsed ? 'w-18' : 'w-64'
         }`}
       >
         {renderNavContent(false)}
       </aside>
 
-      {/* 2. Mobile Drawer Overlay (Slide over when isMobileNavOpen is true) */}
+      {/* Mobile Slide-Over Navigation Drawer */}
       {isMobileNavOpen && (
-        <div className="fixed inset-0 z-50 flex md:hidden bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 flex md:hidden animate-in fade-in duration-150">
+          {/* Dark Backdrop Overlay */}
           <div 
-            className="w-72 max-w-[85vw] h-full border-r-[3px] border-black shadow-[10px_0px_0px_#000] animate-in slide-in-from-left duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
+            onClick={() => setIsMobileNavOpen(false)}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+          />
+
+          {/* Drawer Content */}
+          <div className="relative flex w-4/5 max-w-xs flex-1 flex-col bg-[#161b22] border-r-[3px] border-black shadow-[10px_0px_0px_#000000] z-10 animate-in slide-in-from-left duration-200">
             {renderNavContent(true)}
           </div>
-          <div 
-            className="flex-1 h-full"
-            onClick={() => setIsMobileNavOpen(false)}
-          />
         </div>
       )}
     </>
