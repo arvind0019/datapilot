@@ -119,7 +119,6 @@ export interface ModelingTableNode {
   description: string;
   owner: string;
   lastUpdated: string;
-  dbtSource?: string;
 }
 
 export interface ModelingRelationship {
@@ -128,70 +127,56 @@ export interface ModelingRelationship {
   fromColumn: string;
   toTable: string;
   toColumn: string;
-  type: '1:1' | '1:N' | 'N:M';
+  type?: 'one-to-one' | 'one-to-many' | 'many-to-many';
   cardinality?: '1:1' | '1:N' | 'N:M';
 }
 
-export type WidgetType = 'bar' | 'line' | 'area' | 'donut' | 'kpi' | 'table' | 'funnel' | 'heatmap';
+export type WidgetType = 'area' | 'bar' | 'donut' | 'kpi' | 'funnel' | 'table';
 
 export interface DashboardWidget {
   id: string;
   title: string;
   type: WidgetType;
   metric: string;
-  dimension?: string;
-  dateRange?: string;
-  granularity?: 'hourly' | 'daily' | 'weekly' | 'monthly';
-  gridSpan?: { cols: number; rows: number };
-  colorScheme?: string;
-  data: any[];
-  width?: 'half' | 'full';
+  value?: string;
+  change?: string;
+  timeRange?: string;
+  sqlQuery?: string;
+  chartData?: any;
+  colSpan?: 1 | 2 | 3 | 4;
+  width?: 'full' | 'half' | 'third';
   dataSourceId?: string;
+  data?: any;
+  dimension?: string;
   refreshIntervalSec?: number;
-  kpiValue?: string;
-  kpiDelta?: string;
-  kpiDeltaPositive?: boolean;
 }
 
 export interface SlowQueryLog {
   id: string;
   query: string;
-  database: string;
   executionTimeMs: number;
   durationSec?: number;
+  database: string;
   rowsScanned: number;
   rowsReturned: number;
   frequency: number | string;
-  timestamp: string;
-  bottleneck: string;
+  impactScore?: number;
   rootCause?: string;
+  bottleneck?: string;
   possibleCause?: string;
-  optimizationSuggestion?: string;
   recommendedIndexSql?: string;
   indexRecommendation?: {
     ddl: string;
     targetTable: string;
     estimatedSpeedup: string;
   };
-  optimizedSql?: string;
-  executionPlan?: {
-    operation: string;
-    details: string;
-    cost: number | string;
-    durationMs: number;
-  }[];
-  queryPlan?: {
-    nodeType: string;
-    cost: number;
-    rows: number;
-    timeMs: number;
-    detail: string;
-  }[];
+  executionPlan?: { operation: string; cost: number; durationMs: number; details: string }[];
+  queryPlan?: { nodeType: string; cost: number; timeMs: number; detail: string }[];
 }
 
 export type ErrorSeverity = 'critical' | 'warning' | 'info';
-export type ErrorSource = 'SQL' | 'Database' | 'Dashboard' | 'API' | 'Deployments' | 'Permissions';
-export type ErrorStatus = 'open' | 'investigating' | 'resolved' | 'ignored';
+export type ErrorSource = 'Database' | 'SQL Query' | 'REST API' | 'Deployments' | 'Access Control';
+export type ErrorStatus = 'open' | 'investigating' | 'resolved';
 
 export interface DebugErrorItem {
   id: string;
@@ -286,4 +271,76 @@ export interface ToastMessage {
   title: string;
   message?: string;
   duration?: number;
+}
+
+// 1. Automated Slack / Discord / Email Alert Rule
+export interface AlertRule {
+  id: string;
+  title: string;
+  metric: 'query_latency' | 'error_spike' | 'daily_mrr_digest' | 'replication_lag' | 'db_cpu_usage';
+  condition: 'greater_than' | 'equals' | 'anomaly_spike' | 'scheduled_cron';
+  thresholdValue: string;
+  channel: 'slack' | 'discord' | 'email' | 'webhook';
+  destinationTarget: string;
+  schedule: 'realtime' | 'daily_9am' | 'hourly' | 'weekly_monday';
+  status: 'active' | 'paused';
+  lastTriggered?: string;
+  lastPayloadSummary?: string;
+}
+
+// 2. No-Code Visual Query Builder
+export interface VisualFilter {
+  id: string;
+  column: string;
+  operator: 'equals' | 'not_equals' | 'greater_than' | 'less_than' | 'contains' | 'is_null';
+  value: string;
+}
+
+export interface VisualAggregation {
+  id: string;
+  column: string;
+  func: 'SUM' | 'COUNT' | 'AVG' | 'MIN' | 'MAX' | 'COUNT_DISTINCT';
+  alias: string;
+}
+
+export interface VisualQueryState {
+  selectedTable: string;
+  selectedColumns: string[];
+  filters: VisualFilter[];
+  aggregations: VisualAggregation[];
+  groupByColumn: string;
+  orderByColumn: string;
+  orderDirection: 'ASC' | 'DESC';
+  limit: number;
+}
+
+// 3. Real-Time Multi-User Collaborator Presence
+export interface CollaboratorPresence {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  color: string;
+  activeLine: number;
+  isTyping: boolean;
+  status: 'online' | 'editing' | 'idle';
+  lastAction: string;
+}
+
+export interface QueryComment {
+  id: string;
+  author: string;
+  avatar: string;
+  line: number;
+  text: string;
+  timestamp: string;
+  resolved: boolean;
+}
+
+// 4. Gemini AI Live Configuration
+export interface GeminiAIConfig {
+  apiKey: string;
+  model: 'gemini-2.0-flash' | 'gemini-1.5-pro' | 'gemini-1.5-flash';
+  customInstructions?: string;
+  isLiveConnected: boolean;
 }

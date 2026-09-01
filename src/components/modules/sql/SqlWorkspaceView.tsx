@@ -5,14 +5,22 @@ import {
   Sparkles, 
   Save, 
   Download, 
-  Boxes, 
   Database, 
   Clock, 
   GitFork, 
   ArrowRight,
-  Table as TableIcon
+  Table as TableIcon,
+  Users,
+  MessageSquare,
+  Sliders,
+  Plus,
+  Trash2,
+  Check,
+  Zap,
+  Code
 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
+import { VisualFilter, VisualAggregation } from '../../../types';
 
 export const SqlWorkspaceView: React.FC = () => {
   const { 
@@ -31,18 +39,28 @@ export const SqlWorkspaceView: React.FC = () => {
     dataSources, 
     selectedDataSourceId, 
     setSelectedDataSourceId, 
-    openCopilotWithPrompt, 
-    addToast 
+    addToast,
+    collaborators,
+    queryComments,
+    addQueryComment,
+    resolveQueryComment,
+    visualQueryState,
+    setVisualQueryState,
+    compileVisualQueryToSql,
+    generateGeminiSQL,
+    geminiConfig
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'editor' | 'dbt' | 'history' | 'saved'>('editor');
+  const [activeTab, setActiveTab] = useState<'editor' | 'visual' | 'dbt' | 'history' | 'saved'>('editor');
   const [isExplainModalOpen, setIsExplainModalOpen] = useState(false);
   const [saveTitle, setSaveTitle] = useState('');
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [nlPrompt, setNlPrompt] = useState('');
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
   const [selectedDagNode, setSelectedDagNode] = useState<string>('mart_finance_mrr');
-
-  const selectedDs = dataSources.find((d) => d.id === selectedDataSourceId) || dataSources[0];
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [newCommentText, setNewCommentText] = useState('');
+  const [commentLine, setCommentLine] = useState(4);
 
   const handleFormatSql = () => {
     const formatted = activeSql
@@ -53,44 +71,16 @@ export const SqlWorkspaceView: React.FC = () => {
     addToast({ type: 'info', title: 'SQL Formatted' });
   };
 
-  const handleNlGenerate = () => {
+  const handleNlGenerate = async () => {
     if (!nlPrompt.trim()) return;
-    
-    if (nlPrompt.toLowerCase().includes('revenue') || nlPrompt.toLowerCase().includes('monthly')) {
-      setActiveSql(`-- AI Generated: Monthly Revenue & Growth Cohorts
-WITH monthly_cohorts AS (
-  SELECT 
-    DATE_TRUNC('month', created_at) AS signup_month,
-    customer_id,
-    plan_tier,
-    mrr_usd
-  FROM public.customers
-  WHERE created_at >= NOW() - INTERVAL '12 months'
-)
-SELECT 
-  TO_CHAR(signup_month, 'YYYY-Mon') AS cohort,
-  plan_tier,
-  COUNT(DISTINCT customer_id) AS active_subscribers,
-  ROUND(SUM(mrr_usd), 2) AS total_mrr_usd,
-  ROUND(AVG(mrr_usd), 2) AS arpu_usd
-FROM monthly_cohorts
-GROUP BY 1, 2
-ORDER BY signup_month DESC, total_mrr_usd DESC;`);
-    } else {
-      setActiveSql(`-- AI Generated Query from Prompt: "${nlPrompt}"
-SELECT 
-  category, 
-  COUNT(1) as total_items, 
-  ROUND(AVG(base_price), 2) as avg_price_usd
-FROM public.products
-GROUP BY 1
-ORDER BY total_items DESC;`);
-    }
-
+    setIsGeneratingAi(true);
+    const sql = await generateGeminiSQL(nlPrompt);
+    setIsGeneratingAi(false);
+    setActiveSql(sql);
     addToast({
       type: 'success',
-      title: 'AI SQL Generated',
-      message: 'Generated SQL based on natural language prompt.'
+      title: 'Gemini AI SQL Generated',
+      message: 'Generated query based on natural language prompt.'
     });
     setNlPrompt('');
   };
@@ -111,6 +101,18 @@ ORDER BY total_items DESC;`);
     addToast({ type: 'success', title: 'Export Downloaded', message: 'CSV export complete.' });
   };
 
+  const handleCompileAndRunVisual = () => {
+    const generated = compileVisualQueryToSql();
+    setActiveSql(generated);
+    setActiveTab('editor');
+    executeQuery(generated);
+    addToast({
+      type: 'success',
+      title: 'Visual Query Compiled & Executed',
+      message: 'Transpiled visual builder blocks into PostgreSQL SQL.'
+    });
+  };
+
   return (
     <div className="space-y-4 animate-in fade-in duration-150 font-mono text-xs">
       {/* Top Workspace Tabs Bar */}
@@ -126,6 +128,21 @@ ORDER BY total_items DESC;`);
               <Terminal className="h-3.5 w-3.5" />
               <span>SQL IDE</span>
             </button>
+
+            {/* 🌟 Feature 4: No-Code Visual Builder Tab */}
+            <button
+              onClick={() => setActiveTab('visual')}
+              className={`flex items-center space-x-1.5 rounded px-2.5 sm:px-3 py-1.5 text-xs font-black transition-all cursor-pointer min-h-[36px] ${
+                activeTab === 'visual' ? 'bg-[#00ff66] text-black shadow-[2px_2px_0px_#000]' : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <Sliders className="h-3.5 w-3.5" />
+              <span>Visual Builder</span>
+              <span className="brutal-badge bg-black text-[#00ff66] text-[8px]">
+                NO-CODE
+              </span>
+            </button>
+
             <button
               onClick={() => setActiveTab('dbt')}
               className={`flex items-center space-x-1.5 rounded px-2.5 sm:px-3 py-1.5 text-xs font-black transition-all cursor-pointer min-h-[36px] ${
@@ -138,6 +155,7 @@ ORDER BY total_items DESC;`);
                 {dbtModels.length}
               </span>
             </button>
+
             <button
               onClick={() => setActiveTab('saved')}
               className={`flex items-center space-x-1.5 rounded px-2.5 sm:px-3 py-1.5 text-xs font-black transition-all cursor-pointer min-h-[36px] ${
@@ -147,6 +165,7 @@ ORDER BY total_items DESC;`);
               <Save className="h-3.5 w-3.5" />
               <span>Saved</span>
             </button>
+
             <button
               onClick={() => setActiveTab('history')}
               className={`flex items-center space-x-1.5 rounded px-2.5 sm:px-3 py-1.5 text-xs font-black transition-all cursor-pointer min-h-[36px] ${
@@ -159,20 +178,46 @@ ORDER BY total_items DESC;`);
           </div>
         </div>
 
-        {/* Database Selector */}
-        <div className="flex items-center space-x-2 flex-shrink-0">
-          <Database className="h-4 w-4 text-[#00f0ff]" />
-          <select
-            value={selectedDataSourceId}
-            onChange={(e) => setSelectedDataSourceId(e.target.value)}
-            className="rounded bg-[#0d1117] text-white border-2 border-black px-2.5 py-1.5 text-xs font-black shadow-[2px_2px_0px_#000] outline-none cursor-pointer max-w-[200px] sm:max-w-xs truncate"
-          >
-            {dataSources.map((ds) => (
-              <option key={ds.id} value={ds.id}>
-                {ds.name} ({ds.type})
-              </option>
-            ))}
-          </select>
+        {/* Database Selector & Multi-User Presence Strip */}
+        <div className="flex items-center space-x-3 flex-shrink-0">
+          {/* 🌟 Feature 5: Real-Time Collaborators Strip */}
+          <div className="hidden lg:flex items-center space-x-2 brutal-panel px-2.5 py-1 bg-[#161b22] border border-black shadow-[2px_2px_0px_#000]">
+            <div className="flex -space-x-1.5">
+              {collaborators.map((c) => (
+                <img
+                  key={c.id}
+                  src={c.avatar}
+                  alt={c.name}
+                  title={`${c.name}: Line ${c.activeLine} (${c.status})`}
+                  className="h-6 w-6 rounded-full border border-black object-cover"
+                  style={{ borderColor: c.color }}
+                />
+              ))}
+            </div>
+            <span className="text-[10px] text-[#00ff66] font-black">2 COLLABORATING LIVE</span>
+            <button
+              onClick={() => setIsCommentsOpen(!isCommentsOpen)}
+              className="flex items-center space-x-1 text-slate-300 hover:text-white pl-2 border-l border-black"
+            >
+              <MessageSquare className="h-3.5 w-3.5 text-[#ffee00]" />
+              <span className="text-[10px] font-bold">{queryComments.filter(c => !c.resolved).length}</span>
+            </button>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Database className="h-4 w-4 text-[#00f0ff]" />
+            <select
+              value={selectedDataSourceId}
+              onChange={(e) => setSelectedDataSourceId(e.target.value)}
+              className="rounded bg-[#0d1117] text-white border-2 border-black px-2.5 py-1.5 text-xs font-black shadow-[2px_2px_0px_#000] outline-none cursor-pointer max-w-[200px] sm:max-w-xs truncate"
+            >
+              {dataSources.map((ds) => (
+                <option key={ds.id} value={ds.id}>
+                  {ds.name} ({ds.type})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -184,32 +229,33 @@ ORDER BY total_items DESC;`);
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <div className="flex items-center space-x-1.5 text-black font-black flex-shrink-0">
                 <Sparkles className="h-4 w-4 fill-black" />
-                <span className="text-xs uppercase">AI Prompt to SQL:</span>
+                <span className="text-xs uppercase">Google Gemini Text to SQL:</span>
               </div>
               <input
                 type="text"
                 value={nlPrompt}
                 onChange={(e) => setNlPrompt(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleNlGenerate()}
-                placeholder="e.g. 'Show monthly revenue by tier for the last 12 months'"
+                placeholder="e.g. 'Show monthly revenue by tier for the last 12 months' or 'Find top churn risk accounts'"
                 className="flex-1 rounded border-2 border-black bg-white px-3 py-1.5 text-xs text-black placeholder-slate-600 outline-none font-bold min-h-[36px]"
               />
               <button
                 onClick={handleNlGenerate}
+                disabled={isGeneratingAi}
                 className="brutal-btn bg-black text-white hover:bg-slate-900 px-3 py-1.5 text-xs font-black min-h-[36px]"
               >
-                GENERATE SQL
+                {isGeneratingAi ? 'GENERATING...' : 'GENERATE SQL'}
               </button>
             </div>
           </div>
 
-          {/* SQL Editor Area */}
+          {/* SQL Editor Area with Live Multi-User Collaboration Indicators */}
           <div className="brutal-panel p-4 space-y-3 bg-[#161b22]">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-black pb-2">
               <div className="flex items-center space-x-2">
                 <span className="text-white font-black text-xs uppercase">// QUERY_SCRATCHPAD.SQL</span>
                 <span className="brutal-badge bg-[#00ff66] text-black">
-                  READY
+                  LIVE COLLAB
                 </span>
               </div>
 
@@ -225,6 +271,13 @@ ORDER BY total_items DESC;`);
                   className="brutal-btn bg-[#00f0ff] text-black px-2.5 py-1 text-[11px] font-black min-h-[32px]"
                 >
                   EXPLAIN PLAN
+                </button>
+                <button
+                  onClick={() => setIsCommentsOpen(!isCommentsOpen)}
+                  className="brutal-btn bg-[#ffee00] text-black px-2.5 py-1 text-[11px] font-black min-h-[32px]"
+                >
+                  <MessageSquare className="h-3 w-3 mr-1" />
+                  <span>COMMENTS</span>
                 </button>
                 <button
                   onClick={() => setIsSaveModalOpen(true)}
@@ -244,7 +297,7 @@ ORDER BY total_items DESC;`);
               </div>
             </div>
 
-            {/* Monospace Text Area */}
+            {/* Monospace Text Area with Presence Badges */}
             <div className="relative">
               <textarea
                 value={activeSql}
@@ -254,6 +307,16 @@ ORDER BY total_items DESC;`);
                 placeholder="-- Enter your SQL query here..."
                 spellCheck={false}
               />
+
+              {/* Collaborator Cursor Badges Overlay */}
+              <div className="absolute top-12 right-4 flex items-center space-x-2 pointer-events-none">
+                <span className="brutal-badge bg-[#ffee00] text-black text-[9px] shadow-[2px_2px_0px_#000]">
+                  Marcus Vance typing Line 4
+                </span>
+                <span className="brutal-badge bg-[#00f0ff] text-black text-[9px] shadow-[2px_2px_0px_#000]">
+                  Sarah Chen on Line 8
+                </span>
+              </div>
             </div>
           </div>
 
@@ -311,10 +374,134 @@ ORDER BY total_items DESC;`);
         </div>
       )}
 
-      {/* Tab 2: dbt & Lineage DAG */}
+      {/* 🌟 Tab 2: No-Code Visual Query Builder */}
+      {activeTab === 'visual' && (
+        <div className="brutal-panel p-5 space-y-5 bg-[#161b22]">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b-2 border-black pb-3">
+            <div>
+              <div className="flex items-center space-x-2">
+                <h3 className="font-display text-base font-black text-white uppercase">No-Code Visual Query Builder</h3>
+                <span className="brutal-badge bg-[#00ff66] text-black">DRAG & DROP</span>
+              </div>
+              <p className="text-slate-400 text-xs mt-0.5">Pick database tables, visual filters, aggregations, and generate production SQL without writing code.</p>
+            </div>
+
+            <button
+              onClick={handleCompileAndRunVisual}
+              className="brutal-btn brutal-btn-green px-5 py-2 text-xs font-black min-h-[40px] self-start sm:self-auto"
+            >
+              <Zap className="h-4 w-4 mr-1.5 fill-black" />
+              <span>COMPILE & RUN QUERY</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Step 1: Pick Table */}
+            <div className="brutal-box p-3 bg-[#0d1117] space-y-2">
+              <span className="text-[10px] font-black text-[#ffee00] uppercase">// 1. SELECT DATA TABLE</span>
+              <select
+                value={visualQueryState.selectedTable}
+                onChange={(e) => setVisualQueryState({ ...visualQueryState, selectedTable: e.target.value })}
+                className="w-full rounded border-2 border-black bg-[#161b22] px-3 py-2 text-white font-bold outline-none"
+              >
+                <option value="customers">public.customers (128.4k rows)</option>
+                <option value="orders">public.orders (4.28M rows)</option>
+                <option value="products">public.products (3.8k rows)</option>
+                <option value="subscriptions">public.subscriptions (98.4k rows)</option>
+              </select>
+            </div>
+
+            {/* Step 2: Group By */}
+            <div className="brutal-box p-3 bg-[#0d1117] space-y-2">
+              <span className="text-[10px] font-black text-[#00f0ff] uppercase">// 2. GROUP BY DIMENSION</span>
+              <select
+                value={visualQueryState.groupByColumn}
+                onChange={(e) => setVisualQueryState({ ...visualQueryState, groupByColumn: e.target.value })}
+                className="w-full rounded border-2 border-black bg-[#161b22] px-3 py-2 text-white font-bold outline-none"
+              >
+                <option value="plan_tier">plan_tier</option>
+                <option value="country_code">country_code</option>
+                <option value="category">category</option>
+                <option value="status">status</option>
+              </select>
+            </div>
+
+            {/* Step 3: Order By & Limit */}
+            <div className="brutal-box p-3 bg-[#0d1117] space-y-2">
+              <span className="text-[10px] font-black text-[#00ff66] uppercase">// 3. SORTING & LIMIT</span>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="text"
+                  value={visualQueryState.orderByColumn}
+                  onChange={(e) => setVisualQueryState({ ...visualQueryState, orderByColumn: e.target.value })}
+                  placeholder="Order by column..."
+                  className="flex-1 rounded border-2 border-black bg-[#161b22] px-2 py-1.5 text-white font-bold"
+                />
+                <select
+                  value={visualQueryState.orderDirection}
+                  onChange={(e) => setVisualQueryState({ ...visualQueryState, orderDirection: e.target.value as 'ASC' | 'DESC' })}
+                  className="rounded border-2 border-black bg-[#161b22] px-2 py-1.5 text-white font-bold"
+                >
+                  <option value="DESC">DESC</option>
+                  <option value="ASC">ASC</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Aggregations Builder */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black text-[#ffee00] uppercase">// METRIC AGGREGATIONS</span>
+              <button
+                onClick={() => {
+                  const newAgg: VisualAggregation = { id: 'agg-' + Date.now(), column: 'mrr_usd', func: 'SUM', alias: 'total_mrr' };
+                  setVisualQueryState({ ...visualQueryState, aggregations: [...visualQueryState.aggregations, newAgg] });
+                }}
+                className="brutal-btn bg-[#21262d] text-white px-2.5 py-1 text-[10px] font-black"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                <span>ADD METRIC</span>
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {visualQueryState.aggregations.map((agg, idx) => (
+                <div key={agg.id || idx} className="brutal-box p-2.5 bg-[#0d1117] flex items-center justify-between gap-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-[#00ff66] font-black">{agg.func}</span>
+                    <span className="text-white">({agg.column})</span>
+                    <span className="text-slate-400">AS</span>
+                    <span className="text-[#00f0ff] font-bold">{agg.alias}</span>
+                  </div>
+
+                  <button
+                    onClick={() => setVisualQueryState({ ...visualQueryState, aggregations: visualQueryState.aggregations.filter((_, i) => i !== idx) })}
+                    className="text-slate-400 hover:text-white"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Live Compiled SQL Preview */}
+          <div className="space-y-2 pt-2 border-t-2 border-black">
+            <span className="text-xs font-black text-white uppercase flex items-center space-x-1.5">
+              <Code className="h-4 w-4 text-[#00f0ff]" />
+              <span>LIVE COMPILED POSTGRESQL SQL</span>
+            </span>
+            <pre className="brutal-box p-3 text-[#00f0ff] bg-[#0d1117] text-[11px] overflow-x-auto">
+              {compileVisualQueryToSql()}
+            </pre>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 3: dbt Lineage */}
       {activeTab === 'dbt' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          {/* Models List (4 cols) */}
           <div className="lg:col-span-4 brutal-panel p-4 space-y-3 bg-[#161b22]">
             <div className="flex items-center justify-between border-b-2 border-black pb-2">
               <span className="text-white font-black text-xs uppercase">// DBT MODELS</span>
@@ -349,7 +536,6 @@ ORDER BY total_items DESC;`);
             </div>
           </div>
 
-          {/* DAG Canvas View (8 cols) */}
           <div className="lg:col-span-8 brutal-panel p-5 space-y-4 bg-[#161b22]">
             <div className="flex items-center justify-between border-b-2 border-black pb-2">
               <div>
@@ -364,10 +550,8 @@ ORDER BY total_items DESC;`);
               </button>
             </div>
 
-            {/* Interactive DAG Flow Grid */}
             <div className="brutal-box p-4 bg-[#0d1117] space-y-4">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-center">
-                {/* Source Node */}
                 <div
                   onClick={() => setSelectedDagNode('raw_stripe')}
                   className={`p-3 rounded border-2 border-black cursor-pointer w-full sm:w-44 ${
@@ -380,7 +564,6 @@ ORDER BY total_items DESC;`);
 
                 <ArrowRight className="h-4 w-4 text-[#00f0ff] hidden sm:inline" />
 
-                {/* Staging Node */}
                 <div
                   onClick={() => setSelectedDagNode('stg_stripe')}
                   className={`p-3 rounded border-2 border-black cursor-pointer w-full sm:w-44 ${
@@ -393,7 +576,6 @@ ORDER BY total_items DESC;`);
 
                 <ArrowRight className="h-4 w-4 text-[#00f0ff] hidden sm:inline" />
 
-                {/* Mart Node */}
                 <div
                   onClick={() => setSelectedDagNode('mart_finance_mrr')}
                   className={`p-3 rounded border-2 border-black cursor-pointer w-full sm:w-44 ${
@@ -406,7 +588,6 @@ ORDER BY total_items DESC;`);
               </div>
             </div>
 
-            {/* Compiled SQL View */}
             {selectedModel && (
               <div className="space-y-2">
                 <span className="text-white font-black text-xs uppercase">// COMPILED DBT SQL: {selectedModel.name}.sql</span>
@@ -419,7 +600,7 @@ ORDER BY total_items DESC;`);
         </div>
       )}
 
-      {/* Tab 3: Saved Queries */}
+      {/* Tab 4: Saved Queries */}
       {activeTab === 'saved' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {savedQueries.map((q) => (
@@ -457,7 +638,7 @@ ORDER BY total_items DESC;`);
         </div>
       )}
 
-      {/* Tab 4: Query History */}
+      {/* Tab 5: Query History */}
       {activeTab === 'history' && (
         <div className="brutal-panel p-4 space-y-3 bg-[#161b22]">
           <div className="flex items-center justify-between border-b-2 border-black pb-2">
@@ -491,6 +672,71 @@ ORDER BY total_items DESC;`);
                 </button>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* In-Line Comments Drawer / Modal */}
+      {isCommentsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md h-full brutal-panel p-5 bg-[#161b22] border-[3px] border-black shadow-[10px_10px_0px_#000] flex flex-col justify-between font-mono text-xs">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between border-b-2 border-black pb-2">
+                <span className="font-display text-base font-black text-white uppercase">IN-LINE QUERY CODE REVIEW</span>
+                <button onClick={() => setIsCommentsOpen(false)} className="brutal-badge bg-white text-black">CLOSE</button>
+              </div>
+
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {queryComments.map((com) => (
+                  <div key={com.id} className="brutal-box p-3 bg-[#0d1117] space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <img src={com.avatar} alt={com.author} className="h-5 w-5 rounded-full border border-black" />
+                        <span className="text-white font-bold">{com.author}</span>
+                      </div>
+                      <span className="brutal-badge bg-[#ffee00] text-black text-[8px]">Line {com.line}</span>
+                    </div>
+                    <p className="text-slate-300 text-xs font-sans">{com.text}</p>
+                    <div className="flex justify-between items-center pt-1 text-[10px] text-slate-500">
+                      <span>{com.timestamp}</span>
+                      <button onClick={() => resolveQueryComment(com.id)} className="text-[#00ff66] font-bold hover:underline">
+                        {com.resolved ? '✓ Resolved' : 'Mark Resolved'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-3 border-t-2 border-black space-y-2">
+              <div className="flex items-center space-x-2">
+                <span className="text-slate-300 font-bold">Line:</span>
+                <input
+                  type="number"
+                  value={commentLine}
+                  onChange={(e) => setCommentLine(Number(e.target.value))}
+                  className="w-16 rounded border border-black bg-[#0d1117] px-2 py-1 text-white font-bold"
+                />
+              </div>
+              <textarea
+                value={newCommentText}
+                onChange={(e) => setNewCommentText(e.target.value)}
+                placeholder="Leave review comment on query line..."
+                className="w-full brutal-box p-2 bg-[#0d1117] text-white text-xs outline-none"
+                rows={3}
+              />
+              <button
+                onClick={() => {
+                  if (newCommentText.trim()) {
+                    addQueryComment(commentLine, newCommentText);
+                    setNewCommentText('');
+                  }
+                }}
+                className="w-full brutal-btn brutal-btn-yellow py-1.5 font-black"
+              >
+                POST COMMENT
+              </button>
+            </div>
           </div>
         </div>
       )}

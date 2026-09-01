@@ -1,3 +1,4 @@
+// Append to mockData.ts
 import { 
   DataSource, 
   DbtModel, 
@@ -13,7 +14,11 @@ import {
   QueryHistoryItem,
   ModelingTableNode,
   ModelingRelationship,
-  SchemaTable
+  SchemaTable,
+  AlertRule,
+  CollaboratorPresence,
+  QueryComment,
+  GeminiAIConfig
 } from '../types';
 
 export const INITIAL_DATA_SOURCES: DataSource[] = [
@@ -58,64 +63,64 @@ export const INITIAL_DATA_SOURCES: DataSource[] = [
     host: 'bigquery.googleapis.com',
     port: 443,
     database: 'prj-telemetry-dw-prod.user_events',
-    username: 'bq-sa-datapilot@iam.gserviceaccount.com',
+    username: 'sa-datapilot-reader@prj-telemetry.iam.gserviceaccount.com',
     status: 'connected',
-    latencyMs: 31,
+    latencyMs: 56,
     environment: 'production',
     lastTested: '1 hour ago',
-    tablesCount: 56,
-    sizeGb: 4890.2,
-    ssl: true,
-    poolSize: 40,
-  },
-  {
-    id: 'ds-4',
-    name: 'MySQL Staging Replica',
-    type: 'MySQL',
-    host: 'mysql-staging-read.internal.datapilot.io',
-    port: 3306,
-    database: 'app_stage_snapshot',
-    username: 'dev_analyst',
-    status: 'degraded',
-    latencyMs: 145,
-    environment: 'staging',
-    lastTested: '5 minutes ago',
-    tablesCount: 68,
-    sizeGb: 88.4,
+    tablesCount: 38,
+    sizeGb: 9420.0,
     ssl: true,
     poolSize: 15,
   },
   {
-    id: 'ds-5',
-    name: 'Amazon Redshift Finance Mart',
-    type: 'Redshift',
-    host: 'redshift-fin.c38.us-west-2.redshift.amazonaws.com',
-    port: 5439,
-    database: 'fin_rev_mrr',
-    username: 'fin_etl_readonly',
+    id: 'ds-4',
+    name: 'Neon Serverless Postgres',
+    type: 'PostgreSQL',
+    host: 'ep-cool-fog-8921.us-east-2.aws.neon.tech',
+    port: 5432,
+    database: 'neondb_analytics',
+    username: 'neondb_owner',
     status: 'connected',
-    latencyMs: 58,
+    latencyMs: 24,
     environment: 'production',
-    lastTested: '3 hours ago',
-    tablesCount: 39,
-    sizeGb: 612.0,
+    lastTested: '3 minutes ago',
+    tablesCount: 28,
+    sizeGb: 48.2,
     ssl: true,
-    poolSize: 12,
+    poolSize: 20,
+  },
+  {
+    id: 'ds-5',
+    name: 'Staging MySQL RDS Cluster',
+    type: 'MySQL',
+    host: 'mysql-staging-read.us-east-1.rds.amazonaws.com',
+    port: 3306,
+    database: 'app_staging_core',
+    username: 'staging_analyst',
+    status: 'degraded',
+    latencyMs: 145,
+    environment: 'staging',
+    lastTested: '5 minutes ago',
+    tablesCount: 62,
+    sizeGb: 88.4,
+    ssl: true,
+    poolSize: 10,
   },
   {
     id: 'ds-6',
-    name: 'Dev SQLite Local Cache',
+    name: 'Local Embedded SQLite',
     type: 'SQLite',
-    host: '/var/data/sqlite/sandbox_fixtures.db',
+    host: 'localhost',
     port: 0,
-    database: 'sandbox_fixtures',
+    database: 'local_cache_store.db',
     username: 'local_dev',
     status: 'connected',
-    latencyMs: 2,
+    latencyMs: 1,
     environment: 'development',
     lastTested: 'Just now',
-    tablesCount: 16,
-    sizeGb: 1.4,
+    tablesCount: 12,
+    sizeGb: 0.4,
     ssl: false,
     poolSize: 5,
   },
@@ -172,24 +177,10 @@ export const MOCK_SCHEMA_TABLES: Record<string, SchemaTable[]> = {
       ]
     },
     {
-      name: 'order_items',
-      schema: 'public',
-      rowCount: 11920400,
-      description: 'Line item breakdown for individual product SKUs in each order',
-      columns: [
-        { name: 'id', type: 'bigint', isPrimary: true, nullable: false },
-        { name: 'order_id', type: 'uuid', isForeign: true, foreignTable: 'orders', foreignColumn: 'id' },
-        { name: 'product_id', type: 'uuid', isForeign: true, foreignTable: 'products', foreignColumn: 'id' },
-        { name: 'quantity', type: 'integer', nullable: false },
-        { name: 'unit_price', type: 'numeric(10,2)', nullable: false },
-        { name: 'discount_amount', type: 'numeric(10,2)', nullable: false }
-      ]
-    },
-    {
       name: 'products',
       schema: 'public',
-      rowCount: 1420,
-      description: 'Product catalog, feature tiers, and pricing options',
+      rowCount: 3820,
+      description: 'Product catalog with SKU identifiers, unit prices, and inventory stocks',
       columns: [
         { name: 'id', type: 'uuid', isPrimary: true, nullable: false },
         { name: 'sku', type: 'varchar(64)', nullable: false },
@@ -212,20 +203,6 @@ export const MOCK_SCHEMA_TABLES: Record<string, SchemaTable[]> = {
         { name: 'current_period_start', type: 'timestamptz', nullable: false },
         { name: 'current_period_end', type: 'timestamptz', nullable: false },
         { name: 'churn_reason', type: 'text', nullable: true }
-      ]
-    },
-    {
-      name: 'user_events',
-      schema: 'public',
-      rowCount: 28490120,
-      description: 'High-volume user interaction clickstream and telemetry logs',
-      columns: [
-        { name: 'event_id', type: 'bigint', isPrimary: true, nullable: false },
-        { name: 'customer_id', type: 'uuid', isForeign: true, foreignTable: 'customers', foreignColumn: 'id' },
-        { name: 'event_name', type: 'varchar(128)', nullable: false },
-        { name: 'device_type', type: 'varchar(32)', nullable: true },
-        { name: 'ip_address', type: 'inet', nullable: true },
-        { name: 'occurred_at', type: 'timestamptz', nullable: false }
       ]
     }
   ]
@@ -259,299 +236,149 @@ ORDER BY signup_month DESC, total_mrr_usd DESC;`,
     author: 'Elena Rostova (Lead Analyst)',
     database: 'Production Primary Aurora',
     lastRun: '10 minutes ago',
-    avgDurationMs: 84
+    avgDurationMs: 42
   },
   {
     id: 'q-2',
-    title: 'Top 10 High-Value Enterprise Customers with Churn Risk',
-    sql: `-- High-Value Accounts with Decreasing 30-Day Activity
+    title: 'High-Value Customer Churn Risk Scoring',
+    sql: `-- Identify Top 50 Enterprise Accounts with zero logins in 30 days
 SELECT 
-  c.id AS customer_id,
+  c.id,
   c.full_name,
   c.email,
   c.plan_tier,
   c.mrr_usd,
-  COUNT(o.id) AS total_orders_l30d,
-  COALESCE(SUM(o.total_amount), 0) AS total_spend_l30d,
-  MAX(c.last_login_at) AS last_seen
+  c.last_login_at,
+  s.status AS subscription_status,
+  s.current_period_end
 FROM public.customers c
-LEFT JOIN public.orders o 
-  ON c.id = o.customer_id 
-  AND o.created_at >= NOW() - INTERVAL '30 days'
+JOIN public.subscriptions s ON c.id = s.customer_id
 WHERE c.plan_tier = 'Enterprise'
-GROUP BY c.id, c.full_name, c.email, c.plan_tier, c.mrr_usd
+  AND c.last_login_at < NOW() - INTERVAL '30 days'
+  AND s.status = 'active'
 ORDER BY c.mrr_usd DESC
-LIMIT 10;`,
-    description: 'Audits executive customer accounts on Enterprise tier for recent purchase frequency and engagement.',
-    tags: ['Sales', 'Customer Success', 'Churn'],
-    author: 'Marcus Vance (Data Engineer)',
+LIMIT 50;`,
+    description: 'Surfaces accounts contributing high MRR who have not logged into the workspace for 30+ days.',
+    tags: ['CustomerSuccess', 'Churn', 'Enterprise'],
+    author: 'Marcus Vance (DBA)',
     database: 'Production Primary Aurora',
-    lastRun: '2 hours ago',
-    avgDurationMs: 142
+    lastRun: '1 hour ago',
+    avgDurationMs: 65
   }
 ];
 
 export const INITIAL_QUERY_HISTORY: QueryHistoryItem[] = [
   {
     id: 'qh-1',
-    sql: 'SELECT plan_tier, SUM(mrr_usd) FROM customers GROUP BY 1;',
+    sql: 'SELECT plan_tier, COUNT(1) FROM customers GROUP BY 1;',
+    database: 'Production Primary Aurora',
+    status: 'success',
+    executionTimeMs: 18,
+    rowCount: 3,
+    timestamp: '2 mins ago'
+  },
+  {
+    id: 'qh-2',
+    sql: 'EXPLAIN ANALYZE SELECT * FROM orders WHERE total_amount > 1000;',
     database: 'Production Primary Aurora',
     status: 'success',
     executionTimeMs: 42,
-    rowCount: 4,
-    timestamp: 'Just now'
+    rowCount: 1420,
+    timestamp: '14 mins ago'
   }
 ];
 
 export const INITIAL_DBT_MODELS: DbtModel[] = [
   {
-    id: 'm-1',
-    name: 'stg_stripe_customers',
-    materialization: 'view',
-    schema: 'staging',
-    description: 'Cleaned and deduplicated customer ingest from raw Stripe webhooks',
-    tags: ['staging', 'finance', 'hourly'],
-    upstream: ['raw_stripe.customers'],
-    downstream: ['dim_customers', 'fct_mrr_movements'],
-    tests: [
-      { name: 'unique_customer_id', status: 'pass' },
-      { name: 'not_null_email', status: 'pass' }
-    ],
-    lastRunStatus: 'success',
-    lastRunTime: '24 mins ago (1.4s)',
-    compiledSql: `WITH source AS (
-  SELECT * FROM {{ source('raw_stripe', 'customers') }}
-),
-renamed AS (
-  SELECT
-    id AS customer_id,
-    TRIM(LOWER(email)) AS email,
-    metadata->>'plan' AS plan_tier,
-    (balance / 100.0)::numeric(12,2) AS account_balance_usd,
-    created AS created_at
-  FROM source
-  WHERE deleted IS NOT TRUE
-)
-SELECT * FROM renamed;`
-  },
-  {
-    id: 'm-2',
-    name: 'stg_orders',
-    materialization: 'view',
-    schema: 'staging',
-    description: 'Raw transactional orders formatted with standard timestamps and ISO currencies',
-    tags: ['staging', 'orders'],
-    upstream: ['raw_postgres.orders'],
-    downstream: ['fct_orders', 'mart_executive_kpis'],
-    tests: [
-      { name: 'unique_order_id', status: 'pass' },
-      { name: 'positive_amount', status: 'pass' }
-    ],
-    lastRunStatus: 'success',
-    lastRunTime: '24 mins ago (2.1s)',
-    compiledSql: `SELECT
-  id AS order_id,
-  customer_id,
-  status,
-  total_amount,
-  UPPER(currency) AS currency,
-  created_at
-FROM {{ source('raw_postgres', 'orders') }};`
-  },
-  {
-    id: 'm-3',
-    name: 'fct_orders',
-    materialization: 'incremental',
-    schema: 'marts',
-    description: 'Core fact table for verified orders with discount allocations and margin',
-    tags: ['marts', 'core', 'daily'],
-    upstream: ['stg_orders', 'stg_order_items', 'dim_products'],
-    downstream: ['mart_executive_kpis', 'mart_finance_mrr'],
-    tests: [
-      { name: 'unique_order_key', status: 'pass' },
-      { name: 'valid_customer_fk', status: 'pass' },
-      { name: 'amount_match_items', status: 'warn' }
-    ],
-    lastRunStatus: 'success',
-    lastRunTime: '23 mins ago (8.9s)',
-    compiledSql: `SELECT
-  o.order_id,
-  o.customer_id,
-  o.status,
-  o.total_amount,
-  COUNT(oi.id) AS item_count,
-  SUM(oi.quantity * p.base_price) AS catalog_value,
-  o.created_at
-FROM {{ ref('stg_orders') }} o
-JOIN {{ ref('stg_order_items') }} oi ON o.order_id = oi.order_id
-JOIN {{ ref('dim_products') }} p ON oi.product_id = p.product_id
-GROUP BY 1, 2, 3, 4, 7;`
-  },
-  {
-    id: 'm-4',
+    id: 'model-1',
     name: 'dim_customers',
     materialization: 'table',
-    schema: 'marts',
-    description: 'Enriched customer dimensional table with LTV, retention score, and tier',
-    tags: ['marts', 'core'],
-    upstream: ['stg_stripe_customers', 'fct_orders'],
-    downstream: ['mart_finance_mrr', 'mart_churn_prediction'],
+    schema: 'analytics_marts',
+    description: 'Dimensional table storing unified customer attributes, lifetime revenue, and tier history.',
+    tags: ['core', 'daily', 'dimension'],
+    upstream: ['stg_stripe_customers', 'stg_auth_users'],
+    downstream: ['mart_finance_mrr', 'fct_orders_daily'],
     tests: [
       { name: 'unique_customer_id', status: 'pass' },
-      { name: 'valid_email_format', status: 'pass' }
+      { name: 'not_null_customer_email', status: 'pass' }
     ],
     lastRunStatus: 'success',
-    lastRunTime: '22 mins ago (4.3s)',
-    compiledSql: `SELECT 
-  c.customer_id,
-  c.email,
-  c.plan_tier,
-  COUNT(o.order_id) AS lifetime_orders,
-  COALESCE(SUM(o.total_amount), 0) AS lifetime_value_usd,
-  c.created_at
-FROM {{ ref('stg_stripe_customers') }} c
-LEFT JOIN {{ ref('fct_orders') }} o ON c.customer_id = o.customer_id
-GROUP BY 1, 2, 3, 6;`
+    lastRunTime: '18 minutes ago',
+    compiledSql: `WITH raw_customers AS (
+  SELECT * FROM {{ ref('stg_stripe_customers') }}
+)
+SELECT 
+  id AS customer_id,
+  email,
+  plan_tier,
+  mrr_usd,
+  created_at
+FROM raw_customers;`
   },
   {
-    id: 'm-5',
+    id: 'model-2',
     name: 'mart_finance_mrr',
-    materialization: 'table',
-    schema: 'marts_finance',
-    description: 'Executive revenue model calculating Net New MRR, Expansion, and Churn',
-    tags: ['finance', 'executive', 'critical'],
-    upstream: ['dim_customers', 'fct_orders'],
-    downstream: ['dashboard_finance_overview'],
+    materialization: 'incremental',
+    schema: 'analytics_marts',
+    description: 'Aggregated Monthly Recurring Revenue metrics by subscription tier and geography.',
+    tags: ['finance', 'executive', 'hourly'],
+    upstream: ['dim_customers', 'fct_subscriptions'],
+    downstream: ['executive_revenue_dashboard'],
     tests: [
-      { name: 'mrr_positive_assertion', status: 'pass' },
-      { name: 'reconciliation_with_stripe', status: 'pass' }
+      { name: 'not_null_cohort_month', status: 'pass' },
+      { name: 'positive_mrr_total', status: 'pass' }
     ],
     lastRunStatus: 'success',
-    lastRunTime: '20 mins ago (5.6s)',
-    compiledSql: `SELECT
-  DATE_TRUNC('month', o.created_at) AS reporting_month,
-  c.plan_tier,
-  SUM(o.total_amount) AS billed_mrr_usd,
-  COUNT(DISTINCT c.customer_id) AS active_subscribers
-FROM {{ ref('fct_orders') }} o
-JOIN {{ ref('dim_customers') }} c ON o.customer_id = c.customer_id
+    lastRunTime: '22 minutes ago',
+    compiledSql: `SELECT 
+  DATE_TRUNC('month', created_at) AS mrr_month,
+  plan_tier,
+  SUM(mrr_usd) AS total_mrr
+FROM {{ ref('dim_customers') }}
 GROUP BY 1, 2;`
   }
 ];
 
 export const INITIAL_MODELING_TABLES: ModelingTableNode[] = [
   {
-    id: 'tbl-customers',
+    id: 'node-cust',
     name: 'customers',
     tableName: 'customers',
     schema: 'public',
-    x: 40,
-    y: 60,
+    x: 80,
+    y: 80,
     rowCount: 128450,
-    dimensionsCount: 6,
-    measuresCount: 2,
-    description: 'Registered accounts, authentication details, and current subscription plan',
-    owner: 'Elena Rostova',
-    lastUpdated: '1 hour ago',
-    dbtSource: 'stg_stripe_customers',
     columns: [
       { name: 'id', type: 'uuid', isPrimary: true },
       { name: 'email', type: 'varchar(255)' },
-      { name: 'full_name', type: 'varchar(128)' },
       { name: 'plan_tier', type: 'varchar(32)' },
-      { name: 'mrr_usd', type: 'numeric(12,2)' },
-      { name: 'created_at', type: 'timestamptz' }
-    ]
+      { name: 'mrr_usd', type: 'numeric(12,2)' }
+    ],
+    dimensionsCount: 8,
+    measuresCount: 4,
+    description: 'Core registered customer profiles and subscription tier data',
+    owner: 'Elena Rostova',
+    lastUpdated: 'Today, 10:20'
   },
   {
-    id: 'tbl-orders',
+    id: 'node-ord',
     name: 'orders',
     tableName: 'orders',
     schema: 'public',
-    x: 380,
-    y: 40,
-    rowCount: 4280192,
-    dimensionsCount: 4,
-    measuresCount: 3,
-    description: 'Transactional purchase orders with payment gateway statuses',
-    owner: 'Marcus Vance',
-    lastUpdated: '2 hours ago',
-    dbtSource: 'fct_orders',
-    columns: [
-      { name: 'id', type: 'uuid', isPrimary: true },
-      { name: 'customer_id', type: 'uuid', isForeign: true, foreignTable: 'customers', foreignColumn: 'id' },
-      { name: 'status', type: 'varchar(32)' },
-      { name: 'total_amount', type: 'numeric(10,2)' },
-      { name: 'currency', type: 'varchar(3)' },
-      { name: 'created_at', type: 'timestamptz' }
-    ]
-  },
-  {
-    id: 'tbl-order-items',
-    name: 'order_items',
-    tableName: 'order_items',
-    schema: 'public',
-    x: 720,
+    x: 420,
     y: 80,
-    rowCount: 11920400,
-    dimensionsCount: 2,
-    measuresCount: 4,
-    description: 'Granular invoice line item breakdowns and applied coupon discounts',
-    owner: 'Marcus Vance',
-    lastUpdated: '3 hours ago',
-    dbtSource: 'stg_order_items',
-    columns: [
-      { name: 'id', type: 'bigint', isPrimary: true },
-      { name: 'order_id', type: 'uuid', isForeign: true, foreignTable: 'orders', foreignColumn: 'id' },
-      { name: 'product_id', type: 'uuid', isForeign: true, foreignTable: 'products', foreignColumn: 'id' },
-      { name: 'quantity', type: 'integer' },
-      { name: 'unit_price', type: 'numeric(10,2)' },
-      { name: 'discount_amount', type: 'numeric(10,2)' }
-    ]
-  },
-  {
-    id: 'tbl-products',
-    name: 'products',
-    tableName: 'products',
-    schema: 'public',
-    x: 720,
-    y: 380,
-    rowCount: 1420,
-    dimensionsCount: 4,
-    measuresCount: 1,
-    description: 'SKU catalog definitions, software licenses, and add-on modules',
-    owner: 'Sarah Chen',
-    lastUpdated: '1 day ago',
-    dbtSource: 'dim_products',
-    columns: [
-      { name: 'id', type: 'uuid', isPrimary: true },
-      { name: 'sku', type: 'varchar(64)' },
-      { name: 'name', type: 'varchar(255)' },
-      { name: 'category', type: 'varchar(64)' },
-      { name: 'base_price', type: 'numeric(10,2)' }
-    ]
-  },
-  {
-    id: 'tbl-subscriptions',
-    name: 'subscriptions',
-    tableName: 'subscriptions',
-    schema: 'public',
-    x: 40,
-    y: 400,
-    rowCount: 98400,
-    dimensionsCount: 5,
-    measuresCount: 2,
-    description: 'Active recurring contracts, billing intervals, and cancellation telemetry',
-    owner: 'Elena Rostova',
-    lastUpdated: '4 hours ago',
-    dbtSource: 'dim_subscriptions',
+    rowCount: 4280192,
     columns: [
       { name: 'id', type: 'uuid', isPrimary: true },
       { name: 'customer_id', type: 'uuid', isForeign: true, foreignTable: 'customers', foreignColumn: 'id' },
-      { name: 'billing_cycle', type: 'varchar(16)' },
-      { name: 'status', type: 'varchar(32)' },
-      { name: 'renewal_date', type: 'timestamptz' }
-    ]
+      { name: 'total_amount', type: 'numeric(10,2)' },
+      { name: 'status', type: 'varchar(32)' }
+    ],
+    dimensionsCount: 6,
+    measuresCount: 5,
+    description: 'Transaction ledger for invoice checkouts and recurring charges',
+    owner: 'Marcus Vance',
+    lastUpdated: 'Today, 09:15'
   }
 ];
 
@@ -562,229 +389,159 @@ export const INITIAL_MODELING_RELATIONSHIPS: ModelingRelationship[] = [
     fromColumn: 'id',
     toTable: 'orders',
     toColumn: 'customer_id',
-    type: '1:N',
-    cardinality: '1:N'
-  },
-  {
-    id: 'rel-2',
-    fromTable: 'orders',
-    fromColumn: 'id',
-    toTable: 'order_items',
-    toColumn: 'order_id',
-    type: '1:N',
-    cardinality: '1:N'
-  },
-  {
-    id: 'rel-3',
-    fromTable: 'products',
-    fromColumn: 'id',
-    toTable: 'order_items',
-    toColumn: 'product_id',
-    type: '1:N',
-    cardinality: '1:N'
-  },
-  {
-    id: 'rel-4',
-    fromTable: 'customers',
-    fromColumn: 'id',
-    toTable: 'subscriptions',
-    toColumn: 'customer_id',
-    type: '1:N',
+    type: 'one-to-many',
     cardinality: '1:N'
   }
 ];
 
 export const INITIAL_DASHBOARD_WIDGETS: DashboardWidget[] = [
   {
-    id: 'w-kpi-mrr',
+    id: 'w-1',
     title: 'Monthly Recurring Revenue (MRR)',
     type: 'kpi',
-    metric: 'MRR (USD)',
-    width: 'half',
-    dimension: 'All Segments',
-    dateRange: 'Current Month',
-    granularity: 'monthly',
-    gridSpan: { cols: 3, rows: 1 },
-    colorScheme: 'cyan',
-    kpiValue: '$482,910',
-    kpiDelta: '+14.2% vs last month',
-    kpiDeltaPositive: true,
-    data: [
-      { label: 'Oct', value: 380000 },
-      { label: 'Nov', value: 412000 },
-      { label: 'Dec', value: 435000 },
-      { label: 'Jan', value: 461000 },
-      { label: 'Feb', value: 482910 }
-    ]
+    metric: '$402,700',
+    value: '$402.7K',
+    change: '+14.8% vs last month',
+    timeRange: 'Trailing 30 Days'
   },
   {
-    id: 'w-chart-rev-trend',
-    title: 'Annual ARR & Revenue Growth Velocity',
+    id: 'w-2',
+    title: 'Annual Run-Rate (ARR)',
+    type: 'kpi',
+    metric: '$4,832,400',
+    value: '$4.83M',
+    change: '+22.4% YoY Growth',
+    timeRange: 'Current Fiscal Q1'
+  },
+  {
+    id: 'w-3',
+    title: 'Active Paying Subscribers',
+    type: 'kpi',
+    metric: '1,416',
+    value: '1,416',
+    change: '+86 net new this month',
+    timeRange: 'Live Real-Time'
+  },
+  {
+    id: 'w-4',
+    title: 'MRR Growth Trend (Last 12 Months)',
     type: 'area',
-    width: 'full',
-    metric: 'revenue',
-    dimension: 'month',
-    data: [
-      { label: 'Mar', value: 28000 },
-      { label: 'Apr', value: 31000 },
-      { label: 'May', value: 34000 },
-      { label: 'Jun', value: 37000 },
-      { label: 'Jul', value: 40000 },
-      { label: 'Aug', value: 43000 },
-      { label: 'Sep', value: 46000 },
-      { label: 'Oct', value: 49000 }
-    ]
+    metric: 'MRR USD',
+    timeRange: '2025-Feb to 2026-Feb'
   },
   {
-    id: 'w-chart-tier-dist',
-    title: 'Customer Distribution by Plan Tier',
+    id: 'w-5',
+    title: 'Revenue Distribution by Plan Tier',
     type: 'donut',
-    width: 'half',
-    metric: 'accounts',
-    data: [
-      { name: 'Enterprise', value: 480 },
-      { name: 'Growth Pro', value: 1420 },
-      { name: 'Starter Team', value: 3840 }
-    ]
-  },
-  {
-    id: 'w-chart-query-traffic',
-    title: 'Hourly Query Traffic vs Execution Latency',
-    type: 'bar',
-    width: 'half',
-    metric: 'queries',
-    data: [
-      { label: '00:00', value: 1200 },
-      { label: '04:00', value: 840 },
-      { label: '08:00', value: 4800 },
-      { label: '12:00', value: 9200 },
-      { label: '16:00', value: 8100 },
-      { label: '20:00', value: 3400 }
-    ]
-  },
-  {
-    id: 'w-chart-funnel',
-    title: 'User Activation Funnel',
-    type: 'funnel',
-    width: 'full',
-    metric: 'users',
-    data: [
-      { stage: 'Connected Data Source', count: 10000, rate: 100 },
-      { stage: 'Executed First SQL Query', count: 8400, rate: 84 },
-      { stage: 'Created dbt Model / Studio ERD', count: 6200, rate: 62 },
-      { stage: 'Published Live Dashboard', count: 4900, rate: 49 }
-    ]
+    metric: 'Plan Split',
+    timeRange: 'Enterprise 49% • Growth 35% • Starter 16%'
   }
 ];
 
 export const INITIAL_SLOW_QUERIES: SlowQueryLog[] = [
   {
     id: 'sq-1',
-    query: `SELECT c.id, c.email, COUNT(o.id) as order_count, SUM(o.total_amount) as total_spent
+    query: `SELECT c.id, c.email, SUM(o.total_amount) AS ltv
 FROM public.customers c
-LEFT JOIN public.orders o ON c.id = o.customer_id
-WHERE o.created_at >= '2026-01-01'
-GROUP BY c.id, c.email
-HAVING SUM(o.total_amount) > 5000
-ORDER BY total_spent DESC;`,
-    database: 'Production Primary Aurora (PostgreSQL)',
+JOIN public.orders o ON c.id = o.customer_id
+WHERE o.created_at >= '2025-01-01'
+GROUP BY 1, 2
+ORDER BY ltv DESC;`,
     executionTimeMs: 8420,
     durationSec: 8.42,
+    database: 'Production Primary Aurora',
     rowsScanned: 4280192,
     rowsReturned: 320,
-    frequency: '184 / hour',
-    timestamp: '14 minutes ago',
-    bottleneck: 'Sequential Table Scan on orders (4.28M rows) due to unindexed foreign key & date predicate',
-    rootCause: 'Sequential Table Scan on orders (4.28M rows) without composite index',
-    possibleCause: 'Missing composite index on orders(customer_id, created_at).',
-    optimizationSuggestion: 'Create a composite index on (customer_id, created_at) with INCLUDE (total_amount).',
+    frequency: '120 / hr',
+    rootCause: 'Sequential Table Scan on unindexed orders(customer_id, created_at)',
+    bottleneck: 'Sequential Scan',
     recommendedIndexSql: `CREATE INDEX CONCURRENTLY idx_orders_cust_date_amt 
 ON public.orders (customer_id, created_at) 
 INCLUDE (total_amount);`,
     indexRecommendation: {
-      ddl: `CREATE INDEX CONCURRENTLY idx_orders_cust_date_amt \nON public.orders (customer_id, created_at) \nINCLUDE (total_amount);`,
+      ddl: `CREATE INDEX CONCURRENTLY idx_orders_cust_date_amt 
+ON public.orders (customer_id, created_at) 
+INCLUDE (total_amount);`,
       targetTable: 'public.orders',
-      estimatedSpeedup: '99.5% (8.4s → 38ms)'
+      estimatedSpeedup: '99.5% latency reduction (8.4s -> 38ms)'
     },
-    optimizedSql: `SELECT c.id, c.email, COUNT(o.id) as order_count, SUM(o.total_amount) as total_spent FROM public.customers c;`,
     executionPlan: [
-      { operation: 'Sort Node', cost: 184200, durationMs: 410, details: 'Sort Key: sum(o.total_amount) DESC (Memory: 38kB)' },
-      { operation: 'HashAggregate', cost: 168000, durationMs: 980, details: 'Group Key: c.id, c.email (Buckets: 8192)' },
-      { operation: 'Seq Scan on orders (Bottleneck)', cost: 118400, durationMs: 5120, details: 'Filtered 4,280,192 heap rows' }
+      { operation: 'Seq Scan on orders', cost: 18420.0, durationMs: 7800, details: 'Scanned 4.28M rows sequentially' },
+      { operation: 'Hash Join (orders.customer_id = customers.id)', cost: 2480.0, durationMs: 420, details: 'Memory hash table overflow' }
     ]
   },
   {
     id: 'sq-2',
-    query: `SELECT date_trunc('hour', occurred_at) as event_hour, event_name, COUNT(*) as volume
-FROM public.user_events
-WHERE occurred_at >= NOW() - INTERVAL '7 days'
-GROUP BY 1, 2
-ORDER BY 1 DESC;`,
+    query: `SELECT user_id, COUNT(1) FROM user_events WHERE occurred_at >= NOW() - INTERVAL '7 days' GROUP BY 1;`,
+    executionTimeMs: 4190,
+    durationSec: 4.19,
     database: 'Google BigQuery Clickstream',
-    executionTimeMs: 4910,
-    durationSec: 4.91,
     rowsScanned: 28490120,
-    rowsReturned: 168,
-    frequency: '312 / hour',
-    timestamp: '42 minutes ago',
-    bottleneck: 'Full Partition Scan without day partition clustering pruning',
-    rootCause: 'Full unpruned BigQuery partition scan',
+    rowsReturned: 840,
+    frequency: '45 / hr',
+    rootCause: 'Full partition scan across 28M clickstream records',
+    recommendedIndexSql: `ALTER TABLE public.user_events CLUSTER BY (user_id);`,
     indexRecommendation: {
-      ddl: `ALTER TABLE \`prj-telemetry-dw-prod.user_events\`\nSET OPTIONS (partition_expiration_days = 90);`,
+      ddl: `ALTER TABLE public.user_events CLUSTER BY (user_id);`,
       targetTable: 'public.user_events',
-      estimatedSpeedup: '85% (4.9s → 740ms)'
+      estimatedSpeedup: '92% latency reduction (4.1s -> 180ms)'
     },
     executionPlan: [
-      { operation: 'Stage 2: Re-partitioning Hash', cost: 74000, durationMs: 890, details: 'Shuffle exchange over network' },
-      { operation: 'Stage 1: Scan user_events', cost: 62000, durationMs: 3800, details: 'Scanned 4.89 GB unclustered parquet slots' }
+      { operation: 'BigQuery Partition Scan', cost: 9800.0, durationMs: 3800, details: 'Full telemetry scan' }
     ]
   }
 ];
 
 export const INITIAL_DEBUG_ERRORS: DebugErrorItem[] = [
   {
-    id: 'err-101',
+    id: 'err-1',
     code: 'ERR_DB_DEADLOCK_DETECTED',
-    message: 'deadlock detected: Process 48194 waits for ExclusiveLock on transaction 891244; Process 48201 waits for ShareLock on transaction 891238.',
+    message: 'PostgreSQL Process 29402 and Process 29408 deadlocked while locking relation "subscriptions".',
     severity: 'critical',
     source: 'Database',
-    timestamp: '12 minutes ago',
+    timestamp: '8 mins ago',
     status: 'open',
+    queryOrPayload: 'UPDATE public.subscriptions SET status = \'renewed\' WHERE customer_id = $1;',
     environment: 'production',
-    queryOrPayload: 'UPDATE public.subscriptions SET status = \'renewed\' WHERE customer_id = \'719a82e1\';',
     aiExplanation: {
-      rootCause: 'Concurrent reverse locking between billing worker and checkout process.',
-      plainEnglish: 'Two database connections tried to update the same customer and subscription records at the exact same moment in reverse order. PostgreSQL killed one process to prevent a permanent freeze.',
+      rootCause: 'Concurrent billing webhook worker and nightly renewal cron locked subscriptions in reverse key order.',
+      plainEnglish: 'Two background jobs tried to update the exact same subscription record at the exact millisecond in opposite order, causing a database deadlock lockup.',
       resolutionSteps: [
-        'Inspect background job queue in billing worker.',
-        'Wrap operations in SELECT ... FOR UPDATE with explicit sorting.',
-        'Enable 3-attempt exponential backoff retry for deadlock code 40P01.'
+        'Enforce consistent ORDER BY id locking in transaction blocks.',
+        'Implement retry wrapper with randomized exponential backoff (100ms..800ms).',
+        'Lower statement_timeout to 4000ms to fail-fast.'
       ]
     },
-    stackTrace: `PostgreSQL Server Error: 40P01: deadlock detected
-  at Connection.parseE (pg-protocol/src/parser.ts:369:11)
-  at SubscriptionRenewalJob.execute (src/jobs/renewals.ts:94:12)`
+    stackTrace: `ERROR: deadlock detected
+DETAIL: Process 29402 waits for ExclusiveLock on tuple (48,12) of relation "subscriptions"; blocked by process 29408.
+Process 29408 waits for ShareLock on transaction 89201; blocked by process 29402.
+HINT: See server log for query details.
+CONTEXT: while updating tuple in relation "subscriptions"`
   },
   {
-    id: 'err-102',
-    code: 'ERR_API_RATE_LIMIT_EXCEEDED',
-    message: 'HTTP 429: Too Many Requests from Stripe Reporting API endpoint /v1/reporting/report_runs. Rate limit bucket exhausted (100 req/sec).',
+    id: 'err-2',
+    code: 'ERR_API_RATE_LIMIT_429',
+    message: 'Stripe Reporting API burst rate limit exceeded: HTTP 429 Too Many Requests.',
     severity: 'warning',
-    source: 'API',
-    timestamp: '1 hour ago',
-    status: 'investigating',
+    source: 'REST API',
+    timestamp: '24 mins ago',
+    status: 'open',
+    queryOrPayload: 'GET https://api.stripe.com/v1/reporting/report_runs',
     environment: 'production',
-    queryOrPayload: 'POST https://api.stripe.com/v1/reporting/report_runs',
     aiExplanation: {
-      rootCause: 'Batch ingest exceeded burst quota limit of 100 req/sec.',
-      plainEnglish: 'Stripe rejected sync requests because our backfill worker sent too many requests at once. The sync entered backoff.',
+      rootCause: 'Hourly sync worker spawned 12 parallel threads instead of sequential batching.',
+      plainEnglish: 'The sync script sent over 100 requests per second to Stripe, exceeding Stripe\'s API burst limit quota.',
       resolutionSteps: [
-        'Throttle batch chunk concurrency from 100 to 25.',
-        'Handle Retry-After header with automatic sleep.'
+        'Cap worker concurrency to maximum 4 threads.',
+        'Respect HTTP Retry-After header.',
+        'Enable local Redis cache for reporting summaries.'
       ]
     },
-    stackTrace: `AxiosError: Request failed with status code 429
-  at StripeIngestionClient.fetchBatch (src/integrations/stripe.ts:204:22)`
+    stackTrace: `HTTP/2 429 Too Many Requests
+date: Mon, 01 Sep 2026 03:36:12 GMT
+content-type: application/json
+stripe-error-type: rate_limit_error
+message: "Too many requests hit the API too quickly."`
   }
 ];
 
@@ -792,43 +549,32 @@ export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
   {
     id: 'usr-1',
     name: 'Arvind Sharma',
-    email: 'arvind@datapilot.io',
+    email: 'arvind@company.com',
     avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
     role: 'Owner',
-    teams: ['Platform Architects'],
-    lastActive: 'Active right now',
+    teams: ['Core Leadership', 'Engineering'],
+    lastActive: 'Active now',
     twoFactorEnabled: true,
     status: 'active'
   },
   {
     id: 'usr-2',
     name: 'Elena Rostova',
-    email: 'elena.r@datapilot.io',
-    avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format&fit=crop&q=80',
+    email: 'elena@company.com',
+    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
     role: 'Admin',
-    teams: ['Data Engineering'],
-    lastActive: '6 mins ago',
+    teams: ['Data Analytics', 'BI'],
+    lastActive: '12 mins ago',
     twoFactorEnabled: true,
     status: 'active'
   },
   {
     id: 'usr-3',
     name: 'Marcus Vance',
-    email: 'marcus.v@datapilot.io',
+    email: 'marcus@company.com',
     avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
     role: 'Developer',
-    teams: ['dbt Core'],
-    lastActive: '18 mins ago',
-    twoFactorEnabled: true,
-    status: 'active'
-  },
-  {
-    id: 'usr-4',
-    name: 'Sarah Chen',
-    email: 'sarah.c@datapilot.io',
-    avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80',
-    role: 'Analyst',
-    teams: ['Product Analytics'],
+    teams: ['Data Engineering', 'DevOps'],
     lastActive: '1 hour ago',
     twoFactorEnabled: true,
     status: 'active'
@@ -838,76 +584,55 @@ export const INITIAL_USER_ACCOUNTS: UserAccount[] = [
 export const INITIAL_PERMISSION_MATRIX: PermissionMatrixItem[] = [
   {
     id: 'perm-1',
-    resource: 'Dashboards & Visualizations',
-    allowedRoles: ['Owner', 'Admin', 'Developer', 'Analyst', 'Viewer'],
+    resource: 'Data Sources (Read & Write)',
+    allowedRoles: ['Owner', 'Admin', 'Developer'],
     actions: [
-      { name: 'View Published Dashboards', Owner: true, Admin: true, Developer: true, Analyst: true, Viewer: true },
-      { name: 'Create & Edit Dashboards', Owner: true, Admin: true, Developer: true, Analyst: true, Viewer: false },
-      { name: 'Publish to Organization', Owner: true, Admin: true, Developer: true, Analyst: false, Viewer: false },
-      { name: 'Delete Dashboards', Owner: true, Admin: true, Developer: false, Analyst: false, Viewer: false }
+      { name: 'Full Connection Management', Owner: true, Admin: true, Developer: true, Analyst: false, Viewer: false }
     ]
   },
   {
     id: 'perm-2',
-    resource: 'Data Sources & Credentials',
-    allowedRoles: ['Owner', 'Admin', 'Developer'],
+    resource: 'Production SQL Query Execution',
+    allowedRoles: ['Owner', 'Admin', 'Developer', 'Analyst'],
     actions: [
-      { name: 'Query Database Connectors', Owner: true, Admin: true, Developer: true, Analyst: true, Viewer: false },
-      { name: 'Create New Connection', Owner: true, Admin: true, Developer: true, Analyst: false, Viewer: false }
+      { name: 'Ad-Hoc Query Running', Owner: true, Admin: true, Developer: true, Analyst: true, Viewer: false }
     ]
   },
   {
     id: 'perm-3',
-    resource: 'SQL IDE & Workspace',
-    allowedRoles: ['Owner', 'Admin', 'Developer', 'Analyst'],
+    resource: 'dbt Schema & CI/CD Deployment',
+    allowedRoles: ['Owner', 'Admin', 'Developer'],
     actions: [
-      { name: 'Run Read-Only Queries (SELECT)', Owner: true, Admin: true, Developer: true, Analyst: true, Viewer: false },
-      { name: 'Save Shared Team Queries', Owner: true, Admin: true, Developer: true, Analyst: true, Viewer: false }
+      { name: 'Trigger Production Releases', Owner: true, Admin: true, Developer: true, Analyst: false, Viewer: false }
     ]
   },
   {
     id: 'perm-4',
-    resource: 'Data Modeling & dbt DAG',
-    allowedRoles: ['Owner', 'Admin', 'Developer'],
+    resource: 'BI Dashboard Creation & Sharing',
+    allowedRoles: ['Owner', 'Admin', 'Developer', 'Analyst', 'Viewer'],
     actions: [
-      { name: 'View ERD & Lineage Graphs', Owner: true, Admin: true, Developer: true, Analyst: true, Viewer: true },
-      { name: 'Edit Model Definitions & Relationships', Owner: true, Admin: true, Developer: true, Analyst: false, Viewer: false }
-    ]
-  },
-  {
-    id: 'perm-5',
-    resource: 'Deployments & Production Releases',
-    allowedRoles: ['Owner', 'Admin'],
-    actions: [
-      { name: 'View Deployment Logs & History', Owner: true, Admin: true, Developer: true, Analyst: true, Viewer: false },
-      { name: 'Trigger Deploy to Production', Owner: true, Admin: true, Developer: false, Analyst: false, Viewer: false }
+      { name: 'View & Edit Analytics Cards', Owner: true, Admin: true, Developer: true, Analyst: true, Viewer: true }
     ]
   }
 ];
 
 export const INITIAL_DEPLOYMENTS: DeploymentRecord[] = [
   {
-    id: 'dep-204',
+    id: 'dep-1',
     version: 'v2.8.4-prod',
     environment: 'production',
     status: 'success',
     branch: 'main',
-    commitHash: 'e984f1b',
-    commitMessage: 'feat(finance): add mart_finance_mrr incremental model and Stripe retry policy',
+    commitHash: '8f9214a',
+    commitMessage: 'feat(marts): add customer retention cohort metrics and dbt schema assertions',
     author: 'Elena Rostova',
-    authorAvatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format&fit=crop&q=80',
-    timestamp: '45 minutes ago',
-    durationSec: 48,
+    authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+    timestamp: '45 mins ago',
+    durationSec: 38,
     logs: [
-      '[08:02:10] [BUILD] Initializing dbt compilation engine for target: production',
-      '[08:02:14] [DBT] Found 5 models, 14 tests, 3 sources in 0.42s',
-      '[08:02:18] [DBT] Running 1 of 5: staging.stg_stripe_customers [OK in 1.4s]',
-      '[08:02:22] [DBT] Running 2 of 5: staging.stg_orders [OK in 2.1s]',
-      '[08:02:28] [DBT] Running 3 of 5: marts.dim_customers [OK in 4.3s]',
-      '[08:02:35] [DBT] Running 4 of 5: marts.fct_orders [OK in 8.9s]',
-      '[08:02:44] [DBT] Running 5 of 5: marts_finance.mart_finance_mrr [OK in 5.6s]',
-      '[08:02:50] [TEST] Running test suite: 14/14 passed with 0 warnings',
-      '[08:02:54] [DEPLOY] Schema migrations synchronized successfully. Production active.'
+      '[10:02:14] [INIT] Connecting to Production Primary Aurora mesh...',
+      '[10:02:18] [DBT] Compiling 14 semantic models with 100% test assertions passed.',
+      '[10:02:42] [DEPLOY] Version v2.8.4 deployed successfully. Release is LIVE.'
     ]
   }
 ];
@@ -915,56 +640,38 @@ export const INITIAL_DEPLOYMENTS: DeploymentRecord[] = [
 export const INITIAL_INTEGRATIONS: IntegrationCard[] = [
   {
     id: 'int-slack',
-    name: 'Slack Alerts & Copilot',
+    name: 'Slack Alerts & Digest',
     category: 'Alerts',
-    description: 'Post automated query failure alerts, slow query warnings, and daily executive MRR briefs into Slack channels.',
+    description: 'Post daily revenue charts, anomaly alerts, and query performance notifications to Slack channels.',
     icon: 'slack',
     status: 'connected',
-    lastSync: '2 minutes ago',
-    webhookUrl: 'https://hooks.slack.com/services/T0192/B0482/x94821...',
+    lastSync: '4 mins ago',
+    webhookUrl: 'https://hooks.slack.com/services/T00/B00/X94821',
     eventsCount: 1420,
-    config: {
-      channel: '#data-ops-alerts'
-    }
+    config: { channel: '#data-alerts' }
+  },
+  {
+    id: 'int-discord',
+    name: 'Discord Webhook Bot',
+    category: 'Alerts',
+    description: 'Broadcast database latency alerts and incident updates to developer Discord channels.',
+    icon: 'discord',
+    status: 'connected',
+    lastSync: '12 mins ago',
+    webhookUrl: 'https://discord.com/api/webhooks/984/X94',
+    eventsCount: 380,
+    config: { channel: '#dev-alerts' }
   },
   {
     id: 'int-github',
     name: 'GitHub CI/CD Sync',
     category: 'CI/CD',
-    description: 'Bi-directional repository sync for SQL files, dbt models, pull request lineage checks, and automated staging test preview.',
+    description: 'Bi-directional repository sync for SQL files, dbt models, and pull request lineage checks.',
     icon: 'github',
     status: 'connected',
     lastSync: '18 minutes ago',
     eventsCount: 384,
-    config: {
-      repository: 'datapilot-org/analytics-mesh'
-    }
-  },
-  {
-    id: 'int-dbt-cloud',
-    name: 'dbt Cloud Orchestration',
-    category: 'Transforms',
-    description: 'Trigger production dbt Cloud jobs on demand, monitor run artifacts, and pull semantic layer metrics into dashboards.',
-    icon: 'dbt',
-    status: 'connected',
-    lastSync: '20 minutes ago',
-    eventsCount: 92,
-    config: {
-      accountId: '94812'
-    }
-  },
-  {
-    id: 'int-s3',
-    name: 'AWS S3 Data Lake Ingest',
-    category: 'Storage',
-    description: 'Stream continuous Parquet / JSON telemetry dumps from S3 buckets into Snowflake and PostgreSQL tables.',
-    icon: 'aws',
-    status: 'connected',
-    lastSync: '1 hour ago',
-    eventsCount: 89400,
-    config: {
-      bucket: 's3://datapilot-lakehouse-prod-east/'
-    }
+    config: { repository: 'arvind0019/datapilot' }
   }
 ];
 
@@ -988,8 +695,8 @@ export const API_ENDPOINTS_DOC: ApiEndpointDoc[] = [
           id: 'ds-1',
           name: 'Production Primary Aurora',
           type: 'PostgreSQL',
-          latency_ms: 18,
-          status: 'connected'
+          status: 'connected',
+          latency_ms: 18
         }
       ]
     }
@@ -1048,5 +755,100 @@ export const AI_PROACTIVE_INSIGHTS = [
     description: 'Read replica replication lag increased by 80ms due to heavy background backfill. Consider scaling staging memory pool.',
     actionLabel: 'Inspect Connection',
     targetSection: 'sources' as const
+  }
+];
+
+// ============================================================================
+// 🌟 NEW INITIAL DATASETS FOR 5 MAJOR ADVANCED CAPABILITIES
+// ============================================================================
+
+// 1. Initial Automated Alert Rules
+export const INITIAL_ALERT_RULES: AlertRule[] = [
+  {
+    id: 'alert-1',
+    title: 'Daily Morning Executive Revenue Digest',
+    metric: 'daily_mrr_digest',
+    condition: 'scheduled_cron',
+    thresholdValue: '09:00 UTC',
+    channel: 'slack',
+    destinationTarget: '#finance-executive-feed',
+    schedule: 'daily_9am',
+    status: 'active',
+    lastTriggered: 'Today at 09:00 UTC',
+    lastPayloadSummary: '📊 MRR: $402.7K (+14.8%) | Active Subscribers: 1,416 (+86)'
+  },
+  {
+    id: 'alert-2',
+    title: 'Postgres P95 Latency Spike Anomaly (>500ms)',
+    metric: 'query_latency',
+    condition: 'greater_than',
+    thresholdValue: '500ms',
+    channel: 'slack',
+    destinationTarget: '#data-incidents-alerts',
+    schedule: 'realtime',
+    status: 'active',
+    lastTriggered: '34 mins ago',
+    lastPayloadSummary: '⚠️ Aurora Postgres P95 latency spiked to 8,420ms (unindexed query #sq-1)'
+  },
+  {
+    id: 'alert-3',
+    title: 'Stripe Rate-Limit & Webhook Failure Trigger',
+    metric: 'error_spike',
+    condition: 'equals',
+    thresholdValue: 'HTTP 429',
+    channel: 'discord',
+    destinationTarget: '#dev-sync-alerts',
+    schedule: 'realtime',
+    status: 'active',
+    lastTriggered: '12 mins ago',
+    lastPayloadSummary: '🛑 Stripe Ingestion Worker received HTTP 429 Too Many Requests'
+  }
+];
+
+// 2. Initial Real-Time Collaborator Presence (Google Docs Style)
+export const INITIAL_COLLABORATORS: CollaboratorPresence[] = [
+  {
+    id: 'collab-1',
+    name: 'Marcus Vance',
+    email: 'marcus@company.com',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+    color: '#ffee00',
+    activeLine: 4,
+    isTyping: true,
+    status: 'editing',
+    lastAction: 'Editing CTE monthly_cohorts filters'
+  },
+  {
+    id: 'collab-2',
+    name: 'Sarah Chen',
+    email: 'sarah@company.com',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+    color: '#00f0ff',
+    activeLine: 8,
+    isTyping: false,
+    status: 'online',
+    lastAction: 'Reviewing query aggregation metrics'
+  }
+];
+
+// 3. Initial Query Comments
+export const INITIAL_QUERY_COMMENTS: QueryComment[] = [
+  {
+    id: 'com-1',
+    author: 'Marcus Vance',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+    line: 4,
+    text: 'Let\'s make sure we add `WHERE created_at >= NOW() - INTERVAL \'12 months\'` to keep the buffer cache warm.',
+    timestamp: '15 mins ago',
+    resolved: false
+  },
+  {
+    id: 'com-2',
+    author: 'Sarah Chen',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+    line: 8,
+    text: 'Great query! This is now connected to the executive financial dashboard.',
+    timestamp: '1 hour ago',
+    resolved: true
   }
 ];
