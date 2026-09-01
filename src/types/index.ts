@@ -208,6 +208,7 @@ export interface UserAccount {
   lastActive: string;
   twoFactorEnabled: boolean;
   status: 'active' | 'invited' | 'suspended';
+  provider?: 'email' | 'google' | 'github' | 'supabase';
 }
 
 export interface PermissionMatrixItem {
@@ -343,4 +344,17 @@ export interface GeminiAIConfig {
   model: 'gemini-2.0-flash' | 'gemini-1.5-pro' | 'gemini-1.5-flash';
   customInstructions?: string;
   isLiveConnected: boolean;
+}
+
+// 5. Supabase / Firebase Auth Session Types
+export interface SupabaseAuthConfig {
+  url: string;
+  anonKey: string;
+  isConfigured: boolean;
+}
+
+export interface AuthSession {
+  user: UserAccount | null;
+  isAuthenticated: boolean;
+  token?: string;
 }

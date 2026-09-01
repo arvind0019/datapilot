@@ -6,6 +6,7 @@ import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { CommandPalette } from './components/layout/CommandPalette';
 import { AICopilotDrawer } from './components/layout/AICopilotDrawer';
 import { ToastContainer } from './components/layout/ToastContainer';
+import { AuthModal } from './components/auth/AuthModal';
 
 // 11 Module Views
 import { OverviewView } from './components/modules/overview/OverviewView';
@@ -89,6 +90,9 @@ const MainLayout: React.FC = () => {
 
       {/* Persistent AI Copilot Side Drawer */}
       <AICopilotDrawer />
+
+      {/* User Authentication & Persona Switcher Modal */}
+      <AuthModal />
 
       {/* Toast Notification Stack */}
       <ToastContainer />

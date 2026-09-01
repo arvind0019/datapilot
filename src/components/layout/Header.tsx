@@ -6,7 +6,12 @@ import {
   Check, 
   ChevronDown, 
   Zap,
-  Menu
+  Menu,
+  User,
+  LogOut,
+  Shield,
+  Key,
+  Users
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Environment } from '../../types';
@@ -20,11 +25,15 @@ export const Header: React.FC = () => {
     setIsCommandPaletteOpen,
     isAICopilotOpen,
     setIsAICopilotOpen,
-    setIsMobileNavOpen
+    setIsMobileNavOpen,
+    currentUser,
+    setIsAuthModalOpen,
+    logout
   } = useApp();
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isEnvDropdownOpen, setIsEnvDropdownOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const sectionTitles: Record<string, string> = {
     overview: 'OVERVIEW',
@@ -59,7 +68,7 @@ export const Header: React.FC = () => {
     },
     {
       id: 'n-3',
-      title: 'Deployment v2.8.4 successfully released',
+      title: 'v2.8.4 deployed successfully to Production',
       time: '45m ago',
       unread: false,
       type: 'success',
@@ -68,84 +77,73 @@ export const Header: React.FC = () => {
   ];
 
   const environments: { id: Environment; label: string; badgeColor: string }[] = [
-    { id: 'production', label: 'Production', badgeColor: 'bg-[#00ff66] text-black' },
-    { id: 'staging', label: 'Staging', badgeColor: 'bg-[#ffee00] text-black' },
-    { id: 'development', label: 'Development', badgeColor: 'bg-[#00f0ff] text-black' }
+    { id: 'production', label: 'PRODUCTION', badgeColor: 'bg-[#ff007f] text-white' },
+    { id: 'staging', label: 'STAGING', badgeColor: 'bg-[#ffee00] text-black' },
+    { id: 'development', label: 'DEV LOCAL', badgeColor: 'bg-[#00ff66] text-black' }
   ];
 
+  const currentEnvObj = environments.find((e) => e.id === environment) || environments[0];
+
   return (
-    <header className="relative z-10 flex h-14 sm:h-16 w-full items-center justify-between border-b-[3px] border-black bg-[#161b22] px-3 sm:px-6 select-none flex-shrink-0">
-      {/* Left: Mobile Hamburger Menu & Breadcrumb */}
+    <header className="sticky top-0 z-30 flex h-14 sm:h-16 w-full items-center justify-between border-b-[3px] border-black bg-[#161b22] px-3 sm:px-4 md:px-6 shadow-[0px_4px_0px_#000000]">
+      {/* Left: Mobile Hamburger + Breadcrumb */}
       <div className="flex items-center space-x-2 sm:space-x-3">
-        {/* Mobile Hamburger Menu Button */}
         <button
           onClick={() => setIsMobileNavOpen(true)}
           className="flex md:hidden h-9 w-9 items-center justify-center rounded-md bg-[#ffee00] text-black border-2 border-black shadow-[2px_2px_0px_#000] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
-          title="Open Menu"
+          title="Open Navigation"
         >
           <Menu className="h-5 w-5" />
         </button>
 
-        <div className="flex items-center space-x-1.5 text-xs font-mono">
-          <span 
-            className="hidden sm:inline font-black text-slate-300 hover:text-white cursor-pointer px-1 py-0.5 rounded border border-transparent hover:border-black"
-            onClick={() => setCurrentSection('overview')}
-          >
-            DATAPILOT
-          </span>
-          <span className="hidden sm:inline text-black font-black text-sm">/</span>
-          <span className="brutal-badge bg-[#ffee00] text-black text-[10px] sm:text-[11px] truncate max-w-[120px] sm:max-w-none">
-            {sectionTitles[currentSection] || currentSection}
+        <div className="flex items-center space-x-1.5 font-mono text-xs">
+          <span className="font-black text-white hidden sm:inline uppercase">DATAPILOT</span>
+          <span className="text-slate-500 hidden sm:inline">/</span>
+          <span className="brutal-badge bg-[#ffee00] text-black font-black text-[10px] sm:text-xs">
+            {sectionTitles[currentSection] || currentSection.toUpperCase()}
           </span>
         </div>
       </div>
 
-      {/* Center Search Input Trigger (Collapsible on mobile) */}
-      <div className="flex-1 max-w-xs sm:max-w-md mx-2 sm:mx-6">
-        {/* Desktop Search Bar */}
-        <button
-          onClick={() => setIsCommandPaletteOpen(true)}
-          className="hidden sm:flex group w-full items-center justify-between brutal-box px-3.5 py-1.5 text-xs text-slate-300 hover:text-white bg-[#0d1117] cursor-pointer"
-        >
-          <div className="flex items-center space-x-2 truncate">
-            <Search className="h-3.5 w-3.5 text-[#00f0ff] flex-shrink-0" />
-            <span className="font-mono text-[11px] font-bold truncate">Search tables, models, queries, errors...</span>
-          </div>
-          <kbd className="brutal-badge bg-white text-black text-[9px] flex-shrink-0">
-            Ctrl + K
-          </kbd>
-        </button>
+      {/* Middle: Command Search Trigger */}
+      <button
+        onClick={() => setIsCommandPaletteOpen(true)}
+        className="hidden md:flex items-center space-x-2 rounded-md border-2 border-black bg-[#0d1117] px-3 py-1.5 font-mono text-xs text-slate-400 shadow-[2px_2px_0px_#000] hover:border-[#ffee00] hover:text-white transition-all cursor-pointer min-w-[240px] lg:min-w-[300px] justify-between"
+      >
+        <div className="flex items-center space-x-2">
+          <Search className="h-3.5 w-3.5 text-[#00f0ff]" />
+          <span>Search databases, queries, dbt...</span>
+        </div>
+        <kbd className="rounded border border-black bg-[#21262d] px-1.5 py-0.5 text-[10px] font-black text-white shadow-[1px_1px_0px_#000]">
+          Ctrl+K
+        </kbd>
+      </button>
 
-        {/* Mobile Compact Search Trigger Button */}
+      {/* Right Side: Actions, Environment, User Profile */}
+      <div className="flex items-center space-x-2 sm:space-x-3">
+        {/* Mobile Search Button */}
         <button
           onClick={() => setIsCommandPaletteOpen(true)}
-          className="flex sm:hidden items-center justify-center h-9 w-full rounded-md brutal-box bg-[#0d1117] text-slate-300 px-2.5 space-x-1.5 cursor-pointer"
+          className="flex md:hidden h-8 w-8 items-center justify-center rounded bg-[#0d1117] text-white border-2 border-black shadow-[2px_2px_0px_#000]"
+          title="Search"
         >
           <Search className="h-4 w-4 text-[#00f0ff]" />
-          <span className="font-mono text-[11px] font-bold text-slate-400 truncate">Search...</span>
         </button>
-      </div>
 
-      {/* Right Controls */}
-      <div className="flex items-center space-x-1.5 sm:space-x-3">
-        {/* Environment Selector Dropdown (Icon/Badge on mobile) */}
+        {/* Environment Badge & Switcher */}
         <div className="relative">
           <button
             onClick={() => setIsEnvDropdownOpen(!isEnvDropdownOpen)}
-            className="flex items-center space-x-1 sm:space-x-2 rounded-md bg-white text-black px-2 sm:px-3 py-1.5 text-xs font-black border-2 border-black shadow-[2px_2px_0px_#000] sm:shadow-[3px_3px_0px_#000] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer min-h-[36px]"
+            className={`flex items-center space-x-1.5 rounded-md px-2 sm:px-2.5 py-1 text-[10px] sm:text-xs font-black uppercase border-2 border-black shadow-[2px_2px_0px_#000] transition-all cursor-pointer ${currentEnvObj.badgeColor}`}
           >
-            <div className={`h-2.5 w-2.5 rounded-full border border-black ${
-              environment === 'production' ? 'bg-[#00ff66]' :
-              environment === 'staging' ? 'bg-[#ffee00]' : 'bg-[#00f0ff]'
-            }`} />
-            <span className="hidden sm:inline uppercase font-mono">{environment}</span>
-            <ChevronDown className="h-3.5 w-3.5" />
+            <span className="truncate max-w-[80px] sm:max-w-none">{currentEnvObj.label}</span>
+            <ChevronDown className="h-3 w-3" />
           </button>
 
           {isEnvDropdownOpen && (
             <div className="absolute right-0 mt-2 w-48 rounded-md border-[2.5px] border-black bg-[#161b22] p-1.5 shadow-[6px_6px_0px_#000000] z-50 animate-in fade-in duration-100 font-mono">
-              <div className="px-2 py-1 text-[9px] font-black uppercase text-slate-400 tracking-wider">
-                // SWITCH ENVIRONMENT
+              <div className="border-b border-black px-2 py-1 text-[9px] font-black text-slate-400 uppercase">
+                Switch Environment
               </div>
               {environments.map((env) => (
                 <button
@@ -189,9 +187,9 @@ export const Header: React.FC = () => {
           </button>
 
           {isNotificationsOpen && (
-            <div className="absolute right-0 mt-2 w-72 sm:w-80 rounded-md border-[2.5px] border-black bg-[#161b22] p-3 shadow-[6px_6px_0px_#000000] z-50 animate-in fade-in duration-100">
+            <div className="absolute right-0 mt-2 w-72 sm:w-80 rounded-md border-[2.5px] border-black bg-[#161b22] p-3 shadow-[6px_6px_0px_#000000] z-50 animate-in fade-in duration-100 font-mono">
               <div className="flex items-center justify-between border-b-2 border-black px-1 pb-2">
-                <span className="text-xs font-black text-white font-mono">// NOTIFICATIONS</span>
+                <span className="text-xs font-black text-white">// NOTIFICATIONS</span>
                 <span className="brutal-badge bg-[#ff007f] text-white">
                   2 UNREAD
                 </span>
@@ -214,7 +212,7 @@ export const Header: React.FC = () => {
                         }`} />
                         <span className="text-xs font-bold text-slate-100 truncate">{n.title}</span>
                       </div>
-                      <span className="text-[10px] text-slate-400 font-mono flex-shrink-0 ml-1">{n.time}</span>
+                      <span className="text-[10px] text-slate-400 flex-shrink-0 ml-1">{n.time}</span>
                     </div>
                   </div>
                 ))}
@@ -236,17 +234,84 @@ export const Header: React.FC = () => {
           <span className="hidden sm:inline">COPILOT AI</span>
         </button>
 
-        {/* User Profile Sticker (Desktop only) */}
-        <div className="hidden xl:flex items-center space-x-2 pl-2 border-l-2 border-black">
-          <img
-            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-            alt="Arvind"
-            className="h-8 w-8 rounded object-cover border-2 border-black shadow-[2px_2px_0px_#000]"
-          />
-          <div className="text-left font-mono">
-            <p className="text-xs font-black text-white leading-tight">Arvind S.</p>
-            <p className="text-[9px] text-[#ffee00] uppercase font-black">OWNER</p>
-          </div>
+        {/* Interactive User Profile & Auth Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+            className="flex items-center space-x-2 pl-2 border-l-2 border-black cursor-pointer group"
+          >
+            <img
+              src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'}
+              alt={currentUser.name}
+              className="h-8 w-8 rounded object-cover border-2 border-black shadow-[2px_2px_0px_#000] group-hover:border-[#ffee00]"
+            />
+            <div className="text-left font-mono hidden xl:block">
+              <p className="text-xs font-black text-white leading-tight truncate max-w-[90px]">{currentUser.name}</p>
+              <p className="text-[9px] text-[#ffee00] uppercase font-black">{currentUser.role}</p>
+            </div>
+            <ChevronDown className="h-3 w-3 text-slate-400 hidden xl:block" />
+          </button>
+
+          {isUserMenuOpen && (
+            <div className="absolute right-0 mt-2 w-64 rounded-md border-[2.5px] border-black bg-[#161b22] p-3 shadow-[8px_8px_0px_#000000] z-50 animate-in fade-in duration-100 font-mono text-xs">
+              <div className="border-b-2 border-black pb-2 mb-2">
+                <div className="font-black text-white text-sm">{currentUser.name}</div>
+                <div className="text-[10px] text-slate-400 truncate">{currentUser.email}</div>
+                <div className="mt-1 flex items-center space-x-1">
+                  <span className="brutal-badge bg-[#ffee00] text-black text-[8px]">{currentUser.role}</span>
+                  <span className="brutal-badge bg-[#00ff66] text-black text-[8px]">ACTIVE</span>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <button
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    setIsAuthModalOpen(true);
+                  }}
+                  className="w-full flex items-center space-x-2 rounded p-2 text-slate-200 hover:bg-[#21262d] font-bold text-left cursor-pointer"
+                >
+                  <Users className="h-4 w-4 text-[#00f0ff]" />
+                  <span>Switch Team Persona</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    setCurrentSection('access');
+                  }}
+                  className="w-full flex items-center space-x-2 rounded p-2 text-slate-200 hover:bg-[#21262d] font-bold text-left cursor-pointer"
+                >
+                  <Shield className="h-4 w-4 text-[#ffee00]" />
+                  <span>RBAC & Permissions</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    setIsAuthModalOpen(true);
+                  }}
+                  className="w-full flex items-center space-x-2 rounded p-2 text-slate-200 hover:bg-[#21262d] font-bold text-left cursor-pointer"
+                >
+                  <Key className="h-4 w-4 text-[#ff007f]" />
+                  <span>Supabase Cloud Auth</span>
+                </button>
+
+                <div className="border-t border-black pt-1 mt-1">
+                  <button
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      logout();
+                    }}
+                    className="w-full flex items-center space-x-2 rounded p-2 text-[#ff007f] hover:bg-[#21262d] font-black text-left cursor-pointer"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </header>

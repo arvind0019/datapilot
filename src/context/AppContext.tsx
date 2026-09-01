@@ -25,7 +25,8 @@ import {
   CollaboratorPresence,
   QueryComment,
   GeminiAIConfig,
-  VisualQueryState
+  VisualQueryState,
+  SupabaseAuthConfig
 } from '../types';
 import { 
   INITIAL_DATA_SOURCES, 
@@ -134,9 +135,20 @@ interface AppContextType {
   setSelectedError: (error: DebugErrorItem | null) => void;
   updateErrorStatus: (id: string, status: DebugErrorItem['status']) => void;
 
-  // Access Control
+  // Access Control & Auth
   users: UserAccount[];
   userAccounts: UserAccount[];
+  currentUser: UserAccount;
+  setCurrentUser: (user: UserAccount) => void;
+  isAuthModalOpen: boolean;
+  setIsAuthModalOpen: (open: boolean) => void;
+  loginWithCredentials: (email: string, pass: string) => Promise<boolean>;
+  signUpWithCredentials: (name: string, email: string, pass: string, role: UserRole) => Promise<boolean>;
+  loginWithOAuth: (provider: 'google' | 'github') => Promise<void>;
+  logout: () => void;
+  switchPersona: (userId: string) => void;
+  supabaseAuthConfig: SupabaseAuthConfig;
+  setSupabaseAuthConfig: (cfg: SupabaseAuthConfig) => void;
   updateUserRole: (userId: string, newRole: UserRole) => void;
   inviteUser: (name: string, email: string, role: UserRole, teams: string[]) => void;
   permissionMatrix: PermissionMatrixItem[];
@@ -195,6 +207,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [previewDevice, setPreviewDevice] = useState<ViewportDevice>('desktop');
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
+  // Auth & User Accounts
+  const [users, setUsers] = useState<UserAccount[]>(INITIAL_USER_ACCOUNTS);
+  const [currentUser, setCurrentUser] = useState<UserAccount>(INITIAL_USER_ACCOUNTS[0]);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [supabaseAuthConfig, setSupabaseAuthConfig] = useState<SupabaseAuthConfig>({
+    url: '',
+    anonKey: '',
+    isConfigured: false
+  });
+
   // Data Sources
   const [dataSources, setDataSources] = useState<DataSource[]>(INITIAL_DATA_SOURCES);
   const [selectedDataSourceId, setSelectedDataSourceId] = useState<string>('ds-1');
@@ -239,8 +261,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [debugErrors, setDebugErrors] = useState<DebugErrorItem[]>(INITIAL_DEBUG_ERRORS);
   const [selectedError, setSelectedError] = useState<DebugErrorItem | null>(null);
 
-  // Access Control
-  const [users, setUsers] = useState<UserAccount[]>(INITIAL_USER_ACCOUNTS);
+  // Access Control Matrix
   const [permissionMatrix, setPermissionMatrix] = useState<PermissionMatrixItem[]>(INITIAL_PERMISSION_MATRIX);
 
   // Deployment Center
@@ -314,6 +335,123 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCopilotInitialPrompt(prompt);
     setIsAICopilotOpen(true);
     setIsMobileNavOpen(false);
+  };
+
+  // Auth Actions
+  const loginWithCredentials = async (email: string, pass: string): Promise<boolean> => {
+    await new Promise((r) => setTimeout(r, 600));
+    const matched = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    if (matched) {
+      setCurrentUser(matched);
+      addToast({
+        type: 'success',
+        title: 'Authentication Successful',
+        message: `Welcome back, ${matched.name} (${matched.role}).`
+      });
+      setIsAuthModalOpen(false);
+      return true;
+    }
+
+    const newUser: UserAccount = {
+      id: 'usr-' + Date.now(),
+      name: email.split('@')[0],
+      email,
+      role: 'Developer',
+      teams: ['Engineering'],
+      lastActive: 'Active now',
+      twoFactorEnabled: false,
+      status: 'active',
+      avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+      provider: 'email'
+    };
+    setUsers((prev) => [...prev, newUser]);
+    setCurrentUser(newUser);
+    addToast({
+      type: 'success',
+      title: 'Session Initialized',
+      message: `Signed in as ${newUser.name}.`
+    });
+    setIsAuthModalOpen(false);
+    return true;
+  };
+
+  const signUpWithCredentials = async (name: string, email: string, pass: string, role: UserRole): Promise<boolean> => {
+    await new Promise((r) => setTimeout(r, 600));
+    const newUser: UserAccount = {
+      id: 'usr-' + Date.now(),
+      name,
+      email,
+      role,
+      teams: ['Core Leadership'],
+      lastActive: 'Active now',
+      twoFactorEnabled: true,
+      status: 'active',
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      provider: 'email'
+    };
+    setUsers((prev) => [...prev, newUser]);
+    setCurrentUser(newUser);
+    addToast({
+      type: 'success',
+      title: 'Account Created & Verified',
+      message: `Welcome to DataPilot, ${name}!`
+    });
+    setIsAuthModalOpen(false);
+    return true;
+  };
+
+  const loginWithOAuth = async (provider: 'google' | 'github') => {
+    addToast({
+      type: 'info',
+      title: `Connecting to ${provider === 'github' ? 'GitHub' : 'Google'} OAuth...`,
+      message: 'Authenticating credentials token...'
+    });
+    await new Promise((r) => setTimeout(r, 800));
+
+    const oauthUser: UserAccount = {
+      id: 'usr-oauth-' + Date.now(),
+      name: provider === 'github' ? 'arvind0019 (GitHub)' : 'Arvind Sharma (Google)',
+      email: provider === 'github' ? 'arvind@github.auth' : 'arvind@gmail.com',
+      role: 'Owner',
+      teams: ['Core Leadership', 'DevOps'],
+      lastActive: 'Active now',
+      twoFactorEnabled: true,
+      status: 'active',
+      avatarUrl: provider === 'github' 
+        ? 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80'
+        : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      provider
+    };
+
+    setUsers((prev) => [oauthUser, ...prev.filter(u => u.id !== oauthUser.id)]);
+    setCurrentUser(oauthUser);
+    setIsAuthModalOpen(false);
+    addToast({
+      type: 'success',
+      title: 'OAuth Authentication Successful',
+      message: `Logged in via ${provider.toUpperCase()}.`
+    });
+  };
+
+  const logout = () => {
+    addToast({
+      type: 'info',
+      title: 'Signed Out',
+      message: 'Your session has been terminated.'
+    });
+    setIsAuthModalOpen(true);
+  };
+
+  const switchPersona = (userId: string) => {
+    const target = users.find((u) => u.id === userId);
+    if (target) {
+      setCurrentUser(target);
+      addToast({
+        type: 'info',
+        title: `Switched Persona to ${target.name}`,
+        message: `Active Role: ${target.role}`
+      });
+    }
   };
 
   const testConnection = async (id: string) => {
@@ -420,7 +558,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       sql: activeSql,
       description,
       tags,
-      author: 'Arvind Sharma (Owner)',
+      author: `${currentUser.name} (${currentUser.role})`,
       database: dataSources.find((d) => d.id === selectedDataSourceId)?.name || 'Production Primary Aurora',
       lastRun: 'Just now',
       avgDurationMs: 45
@@ -520,6 +658,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUsers((prev) =>
       prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
     );
+    if (currentUser.id === userId) {
+      setCurrentUser((prev) => ({ ...prev, role: newRole }));
+    }
   };
 
   const inviteUser = (name: string, email: string, role: UserRole, teams: string[]) => {
@@ -572,12 +713,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       branch,
       commitHash: Math.random().toString(16).substring(2, 9),
       commitMessage: notes || `chore(release): automated pipeline sync from ${branch}`,
-      author: 'Arvind Sharma',
-      authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      author: currentUser.name,
+      authorAvatar: currentUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
       timestamp: 'Just now',
       durationSec: 0,
       logs: [
-        `[${new Date().toLocaleTimeString()}] [INIT] Starting deployment pipeline for ${targetEnv}`,
+        `[${new Date().toLocaleTimeString()}] [INIT] Starting deployment pipeline for ${targetEnv} initiated by ${currentUser.name} (${currentUser.role})`,
         `[${new Date().toLocaleTimeString()}] [GIT] Checking out branch: ${branch}`,
         `[${new Date().toLocaleTimeString()}] [DBT] Compiling semantic models and test suites...`
       ]
@@ -628,8 +769,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       branch: 'main',
       commitHash: 'rollback-99',
       commitMessage: `rollback to ${targetVersion} via DataPilot Deployment Center`,
-      author: 'Arvind Sharma',
-      authorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      author: currentUser.name,
+      authorAvatar: currentUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
       timestamp: 'Just now',
       durationSec: 24,
       logs: [
@@ -657,7 +798,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const generateGeminiSQL = async (prompt: string): Promise<string> => {
     if (!prompt.trim()) return '';
 
-    // If real Gemini API key is configured
     if (geminiConfig.apiKey && geminiConfig.apiKey.startsWith('AIza')) {
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiConfig.model}:generateContent?key=${geminiConfig.apiKey}`, {
@@ -693,7 +833,6 @@ Generate only valid, clean, optimized SQL query without any Markdown formatting 
       }
     }
 
-    // Intelligent Built-in Fallback logic
     const lower = prompt.toLowerCase();
     if (lower.includes('churn') || lower.includes('inactive')) {
       return `-- Gemini AI Generated: High Value Inactive Churn Risk
@@ -787,8 +926,8 @@ ORDER BY signup_month DESC, total_mrr_usd DESC;`;
   const addQueryComment = (line: number, text: string) => {
     const newComment: QueryComment = {
       id: 'com-' + Date.now(),
-      author: 'Arvind Sharma (You)',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      author: `${currentUser.name} (You)`,
+      avatar: currentUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
       line,
       text,
       timestamp: 'Just now',
@@ -932,6 +1071,17 @@ ORDER BY signup_month DESC, total_mrr_usd DESC;`;
         updateErrorStatus,
         users,
         userAccounts: users,
+        currentUser,
+        setCurrentUser,
+        isAuthModalOpen,
+        setIsAuthModalOpen,
+        loginWithCredentials,
+        signUpWithCredentials,
+        loginWithOAuth,
+        logout,
+        switchPersona,
+        supabaseAuthConfig,
+        setSupabaseAuthConfig,
         updateUserRole,
         inviteUser,
         permissionMatrix,
